@@ -1,6 +1,7 @@
 "use client";
 
 import Header from "./_components/header";
+import Loading from "./loading";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
 import { redirect } from "next/navigation";
 
@@ -8,7 +9,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode; }) => {
     const { code, isLoading } = useClinicianCode();
 
     if (isLoading) {
-        return <p>Loading...</p>
+        return <Loading />
     }
 
     if (!isLoading && !code) {

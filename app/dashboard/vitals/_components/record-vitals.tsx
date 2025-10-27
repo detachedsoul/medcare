@@ -7,26 +7,35 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 const vitalsSchema = z.object({
 	patientName: z.string().min(2, "Patient name is required"),
+
 	systolic: z
 		.string()
 		.regex(/^\d+$/, "Enter a valid number")
 		.min(1, "Systolic is required"),
+
 	diastolic: z
 		.string()
 		.regex(/^\d+$/, "Enter a valid number")
 		.min(1, "Diastolic is required"),
+
 	heartRate: z
 		.string()
 		.regex(/^\d+$/, "Enter a valid number")
 		.min(1, "Heart rate is required"),
+
 	temperature: z
 		.string()
 		.regex(/^\d+(\.\d+)?$/, "Enter a valid number")
-		.min(1, "Temperature is required"),
+		.refine((val) => parseFloat(val) > 0, {
+			message: "Temperature must be greater than 0",
+		}),
+
 	weight: z
 		.string()
 		.regex(/^\d+(\.\d+)?$/, "Enter a valid number")
-		.min(1, "Weight is required"),
+		.refine((val) => parseFloat(val) > 0, {
+			message: "Weight must be greater than 0",
+		}),
 });
 
 type VitalsFormData = z.infer<typeof vitalsSchema>;
