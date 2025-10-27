@@ -4,9 +4,25 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSupabaseMutation } from "@/hooks/use-mutation";
+import { errorToast, successToast } from "@/lib/toast";
+import { useClinicianCode } from "@/hooks/use-clinician-code";
+import { redirect } from "next/navigation";
+
+interface Vitals {
+	id: string;
+	staff_id: string;
+	patient_name: string;
+	blood_pressure: string;
+	heart_rate: number;
+	temperature: string;
+	weight: string;
+	duration: number;
+	click_count: number;
+}
 
 const vitalsSchema = z.object({
-	patientName: z.string().min(2, "Patient name is required"),
+	patient_name: z.string().min(2, "Patient name is required"),
 
 	systolic: z
 		.string()
@@ -18,7 +34,7 @@ const vitalsSchema = z.object({
 		.regex(/^\d+$/, "Enter a valid number")
 		.min(1, "Diastolic is required"),
 
-	heartRate: z
+	heart_rate: z
 		.string()
 		.regex(/^\d+$/, "Enter a valid number")
 		.min(1, "Heart rate is required"),
@@ -41,9 +57,11 @@ const vitalsSchema = z.object({
 type VitalsFormData = z.infer<typeof vitalsSchema>;
 
 const RecordVitals = () => {
+    const { code } = useClinicianCode();
+
 	const [isRunning, setIsRunning] = useState(false);
 	const [time, setTime] = useState(0);
-    const [clickCount, setClickCount] = useState(0);
+	const [clickCount, setClickCount] = useState(0);
 
 	const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -58,7 +76,7 @@ const RecordVitals = () => {
 	});
 
 	const handleStartTimer = useCallback(() => {
-        if (isRunning) return;
+		if (isRunning) return;
 
 		setIsRunning(true);
 		setTime(0);
@@ -70,7 +88,7 @@ const RecordVitals = () => {
 	}, [isRunning]);
 
 	const handleResetTimer = () => {
-        if (timerRef.current) clearInterval(timerRef.current);
+		if (timerRef.current) clearInterval(timerRef.current);
 
 		setIsRunning(false);
 		setTime(0);
@@ -79,45 +97,63 @@ const RecordVitals = () => {
 		reset();
 	};
 
-	useEffect(() => {
-        if (!isRunning) return;
+	const {
+		mutate: recordVitals,
+		isPending,
+		isError,
+		error,
+	} = useSupabaseMutation<Vitals>({
+		table: "vitals",
+		type: "insert",
+		invalidateKey: ["vitals"],
+		onSuccess: () => {
+			successToast("Vitals recorded successfully.");
 
-        const handleClick = () => setClickCount((prev) => prev + 1);
+			handleResetTimer();
 
-        window.addEventListener("click", handleClick);
+			reset();
+		},
+		onError: (error) => {
+			errorToast(error.message);
+		},
+	});
 
-		return () => window.removeEventListener("click", handleClick);
-	}, [isRunning]);
+    const onSubmit = async (data: VitalsFormData) => {
+        if (!code) {
+            errorToast("Invalid signed in user.");
 
-	const handleFormSubmit = async (data: VitalsFormData) => {
+            redirect("/auth/sign-in")
+        }
+
 		if (!isRunning) {
-			alert("Start the timer before completing the task.");
+			errorToast("Start the timer before completing the task.");
 			return;
 		}
 
 		if (timerRef.current) {
 			clearInterval(timerRef.current);
-			timerRef.current = null;
+
+            timerRef.current = null;
 		}
 
 		setIsRunning(false);
 
+		const bloodPressure = `${data.systolic}/${data.diastolic}`;
+
 		const payload = {
-			...data,
+            weight: data.weight,
 			duration: time,
-			click_count: clickCount,
-			recorded_at: new Date().toISOString(),
+			blood_pressure: bloodPressure,
+			heart_rate: Number(data.heart_rate),
+            click_count: clickCount,
+            staff_id: code,
+            patient_name: data.patient_name,
+            temperature: data.temperature,
 		};
 
-		try {
-			// await supabase insert hook here
-			console.log("✅ Payload sent:", payload);
-			alert("✅ Vitals recorded successfully!");
-			handleResetTimer();
-		} catch (error) {
-			console.error(error);
-			alert("❌ Failed to record vitals.");
-		}
+		recordVitals({
+			...payload,
+		});
 	};
 
 	const formatTime = (t: number) => {
@@ -130,6 +166,16 @@ const RecordVitals = () => {
 			"0",
 		)}`;
 	};
+
+	useEffect(() => {
+		if (!isRunning) return;
+
+		const handleClick = () => setClickCount((prev) => prev + 1);
+
+		window.addEventListener("click", handleClick);
+
+		return () => window.removeEventListener("click", handleClick);
+	}, [isRunning]);
 
 	return (
 		<div className="bg-white p-4 rounded-xl grid gap-6">
@@ -159,11 +205,8 @@ const RecordVitals = () => {
 
 			<div className="grid gap-4">
 				<form
-                    className="grid gap-4 items-start md:grid-cols-2 lg:grid-cols-3"
-					onSubmit={(e) => {
-						e.preventDefault();
-						void handleSubmit(handleFormSubmit)(e);
-					}}
+					className="grid gap-4 items-start md:grid-cols-2 lg:grid-cols-3"
+					onSubmit={() => handleSubmit(onSubmit)}
 				>
 					<label className="grid gap-2">
 						<span className="font-poppins font-medium text-sm">
@@ -175,12 +218,12 @@ const RecordVitals = () => {
 							type="text"
 							placeholder="Enter patient's name"
 							disabled={!isRunning}
-							{...register("patientName")}
+							{...register("patient_name")}
 						/>
 
-						{errors.patientName && (
+						{errors.patient_name && (
 							<p className="text-red text-sm">
-								{errors.patientName.message}
+								{errors.patient_name.message}
 							</p>
 						)}
 					</label>
@@ -232,12 +275,12 @@ const RecordVitals = () => {
 							inputMode="numeric"
 							placeholder="Enter heart rate"
 							disabled={!isRunning}
-							{...register("heartRate")}
+							{...register("heart_rate")}
 						/>
 
-						{errors.heartRate && (
+						{errors.heart_rate && (
 							<p className="text-red text-sm">
-								{errors.heartRate.message}
+								{errors.heart_rate.message}
 							</p>
 						)}
 					</label>
@@ -285,13 +328,21 @@ const RecordVitals = () => {
 						)}
 					</label>
 
+					{isError && (
+						<p className="text-red font-medium md:col-span-2 lg:col-span-3">
+							{error?.message || "Something went wrong"}
+						</p>
+					)}
+
 					<div className="grid gap-4 md:grid-cols-2 md:col-span-3 mt-4">
 						<button
 							className="btn"
 							type="submit"
-							disabled={!isRunning || !isValid}
+							disabled={!isRunning || !isValid || isPending}
 						>
-							Complete Task
+							{isPending
+								? "Recording details..."
+								: "Complete Task"}
 						</button>
 
 						<button

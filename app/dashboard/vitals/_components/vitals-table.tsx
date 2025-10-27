@@ -1,5 +1,6 @@
 "use client";
 
+import Loading from "@/app/dashboard/loading";
 import {
 	Table,
 	TableBody,
@@ -11,68 +12,52 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { TrashIcon, DownloadIcon } from "lucide-react";
+import { useQuery } from "@/hooks/use-query";
+import { useClinicianCode } from "@/hooks/use-clinician-code";
 
-const invoices = [
-	{
-		invoice: "INV001",
-		paymentStatus: "Paid",
-		totalAmount: "$250.00",
-		paymentMethod: "Credit Card",
-	},
-	{
-		invoice: "INV002",
-		paymentStatus: "Pending",
-		totalAmount: "$150.00",
-		paymentMethod: "PayPal",
-	},
-	{
-		invoice: "INV003",
-		paymentStatus: "Unpaid",
-		totalAmount: "$350.00",
-		paymentMethod: "Bank Transfer",
-	},
-	{
-		invoice: "INV004",
-		paymentStatus: "Paid",
-		totalAmount: "$450.00",
-		paymentMethod: "Credit Card",
-	},
-	{
-		invoice: "INV005",
-		paymentStatus: "Paid",
-		totalAmount: "$550.00",
-		paymentMethod: "PayPal",
-	},
-	{
-		invoice: "INV006",
-		paymentStatus: "Pending",
-		totalAmount: "$200.00",
-		paymentMethod: "Bank Transfer",
-	},
-	{
-		invoice: "INV007",
-		paymentStatus: "Unpaid",
-		totalAmount: "$300.00",
-		paymentMethod: "Credit Card",
-	},
-];
+interface Vitals {
+	id: string;
+	staff_id: string;
+	patient_name: string;
+	blood_pressure: string;
+	heart_rate: number;
+	temperature: string;
+	weight: string;
+	duration: number;
+	click_count: number;
+}
 
 const VitalsTable = () => {
+    const { code, isLoading } = useClinicianCode();
+
 	const [selected, setSelected] = useState<string[]>([]);
 
+    const { data, error, isFetching } = useQuery<Vitals>({
+		table: "vitals",
+		filters: [{ column: "staff_id", value: code }],
+		enabled: !isLoading,
+		key: ["vitals"],
+    });
+
 	const toggleSelectAll = (checked: boolean) => {
+        if (!data) {
+            setSelected([]);
+
+            return;
+        }
+
 		if (checked) {
-			setSelected(invoices.map((i) => i.invoice));
+			setSelected(data.map((vitals) => vitals.id));
 		} else {
 			setSelected([]);
 		}
 	};
 
-	const toggleSelect = (invoiceId: string, checked: boolean) => {
+	const toggleSelect = (vitalsId: string, checked: boolean) => {
 		setSelected((prev) =>
 			checked
-				? [...prev, invoiceId]
-				: prev.filter((id) => id !== invoiceId),
+				? [...prev, vitalsId]
+				: prev.filter((id) => id !== vitalsId),
 		);
 	};
 
@@ -82,12 +67,36 @@ const VitalsTable = () => {
 
 	const handleExport = () => {
 		alert(`Exporting ${selected.length || "all"} invoice(s) to Excel`);
-	};
+    };
+
+    if (isFetching) {
+		return <Loading />;
+	}
+
+    if (error) {
+        return (
+			<div className="h-[80dvh] grid place-content-center text-center p-4">
+				<p className="text-red font-medium">
+					{error.message}
+				</p>
+			</div>
+		);
+    }
+
+    if (data && data?.length < 1) {
+        return (
+			<div className="h-[80dvh] grid place-content-center text-center p-4">
+				<p className="text-red font-medium">
+					There are no recorded vitals now. Please check back later.
+				</p>
+			</div>
+		);
+    }
 
 	return (
 		<div className="overflow-x-auto bg-white p-4 rounded-xl space-y-4">
 			<div className="flex gap-4 flex-wrap items-center justify-between">
-				<h2 className="text-lg font-semibold">Invoices</h2>
+				<h2 className="text-lg font-semibold">Recorded Vitals</h2>
 
 				<div className="flex items-center gap-2">
 					<button
@@ -115,29 +124,36 @@ const VitalsTable = () => {
 					<TableRow>
 						<TableHead>
 							<Checkbox
-								checked={selected.length === invoices.length}
+								checked={selected.length === data?.length}
 								onCheckedChange={(checked) =>
 									toggleSelectAll(checked as boolean)
 								}
 							/>
 						</TableHead>
 
-						<TableHead>Invoice</TableHead>
+						<TableHead>Patient Name</TableHead>
 
-						<TableHead>Status</TableHead>
+						<TableHead>Blood Pressure</TableHead>
 
-						<TableHead>Method</TableHead>
+						<TableHead>Heart Rate</TableHead>
 
-						<TableHead>Amount</TableHead>
+						<TableHead>Temperature</TableHead>
+
+                        <TableHead>Weight</TableHead>
+
+                        <TableHead>Number of Clicks</TableHead>
+
+						<TableHead>Duration</TableHead>
 					</TableRow>
 				</TableHeader>
 
 				<TableBody>
-					{invoices.map((invoice) => {
-						const isSelected = selected.includes(invoice.invoice);
+					{data?.map((vitals) => {
+                        const isSelected = selected.includes(vitals.id);
+
 						return (
 							<TableRow
-								key={invoice.invoice}
+								key={vitals.id}
 								className={`transition-colors ${
 									isSelected
 										? "bg-gray-50"
@@ -149,7 +165,7 @@ const VitalsTable = () => {
 										checked={isSelected}
 										onCheckedChange={(checked) =>
 											toggleSelect(
-												invoice.invoice,
+												vitals.id,
 												checked as boolean,
 											)
 										}
@@ -157,14 +173,20 @@ const VitalsTable = () => {
 								</TableCell>
 
 								<TableCell className="font-medium">
-									{invoice.invoice}
+									{vitals.patient_name}
 								</TableCell>
 
-								<TableCell>{invoice.paymentStatus}</TableCell>
+								<TableCell>{vitals.blood_pressure}</TableCell>
 
-								<TableCell>{invoice.paymentMethod}</TableCell>
+								<TableCell>{vitals.heart_rate}</TableCell>
 
-								<TableCell>{invoice.totalAmount}</TableCell>
+                                <TableCell>{vitals.temperature} °C</TableCell>
+
+                                <TableCell>{vitals.weight}</TableCell>
+
+                                <TableCell>{vitals.click_count}</TableCell>
+
+								<TableCell>{vitals.duration}</TableCell>
 							</TableRow>
 						);
 					})}
