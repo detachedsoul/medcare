@@ -14,6 +14,8 @@ import { useState } from "react";
 import { TrashIcon, DownloadIcon } from "lucide-react";
 import { useQuery } from "@/hooks/use-query";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
+import { useSupabaseMutation } from "@/hooks/use-mutation";
+import { successToast } from "@/lib/toast";
 
 interface Vitals {
 	id: string;
@@ -28,23 +30,42 @@ interface Vitals {
 }
 
 const VitalsTable = () => {
-    const { code, isLoading } = useClinicianCode();
+	const { code, isLoading } = useClinicianCode();
 
 	const [selected, setSelected] = useState<string[]>([]);
 
-    const { data, error, isFetching } = useQuery<Vitals>({
+	const { data, error, isFetching } = useQuery<Vitals>({
 		table: "vitals",
 		filters: [{ column: "staff_id", value: code }],
 		enabled: !isLoading,
 		key: ["vitals"],
-    });
+	});
+
+	const {
+		mutate: deleteRecord,
+		isPending,
+		error: deletionError,
+	} = useSupabaseMutation<Vitals>({
+		table: "vitals",
+		type: "delete",
+		invalidateKey: ["vitals"],
+		filters: [
+			{ column: "staff_id", value: code },
+			{ column: "id", value: selected },
+		],
+		onSuccess: () => {
+			successToast("Record(s) deleted successfully.");
+
+			setSelected([]);
+		}
+	});
 
 	const toggleSelectAll = (checked: boolean) => {
-        if (!data) {
-            setSelected([]);
+		if (!data) {
+			setSelected([]);
 
-            return;
-        }
+			return;
+		}
 
 		if (checked) {
 			setSelected(data.map((vitals) => vitals.id));
@@ -61,37 +82,27 @@ const VitalsTable = () => {
 		);
 	};
 
-	const handleDelete = () => {
-		alert(`Deleting invoices: ${selected.join(", ")}`);
+	const handleDelete = async () => {
+		deleteRecord({});
 	};
 
 	const handleExport = () => {
 		alert(`Exporting ${selected.length || "all"} invoice(s) to Excel`);
-    };
+	};
 
-    if (isFetching) {
+	if (isFetching || isPending) {
 		return <Loading />;
 	}
 
-    if (error) {
-        return (
-			<div className="h-[80dvh] grid place-content-center text-center p-4">
-				<p className="text-red font-medium">
-					{error.message}
-				</p>
-			</div>
-		);
-    }
-
-    if (data && data?.length < 1) {
-        return (
-			<div className="h-[80dvh] grid place-content-center text-center p-4">
+	if (data && data?.length < 1) {
+		return (
+			<div className="h-[50dvh] grid place-content-center text-center bg-white p-4 rounded-xl">
 				<p className="text-red font-medium">
 					There are no recorded vitals now. Please check back later.
 				</p>
 			</div>
 		);
-    }
+	}
 
 	return (
 		<div className="overflow-x-auto bg-white p-4 rounded-xl space-y-4">
@@ -118,6 +129,12 @@ const VitalsTable = () => {
 				</div>
 			</div>
 
+			{(error || deletionError) && (
+				<p className="text-red font-medium">
+					{error?.message || deletionError?.message}
+				</p>
+			)}
+
 			{/* Table */}
 			<Table>
 				<TableHeader>
@@ -139,9 +156,9 @@ const VitalsTable = () => {
 
 						<TableHead>Temperature</TableHead>
 
-                        <TableHead>Weight</TableHead>
+						<TableHead>Weight</TableHead>
 
-                        <TableHead>Number of Clicks</TableHead>
+						<TableHead>Number of Clicks</TableHead>
 
 						<TableHead>Duration</TableHead>
 					</TableRow>
@@ -149,7 +166,7 @@ const VitalsTable = () => {
 
 				<TableBody>
 					{data?.map((vitals) => {
-                        const isSelected = selected.includes(vitals.id);
+						const isSelected = selected.includes(vitals.id);
 
 						return (
 							<TableRow
@@ -180,11 +197,11 @@ const VitalsTable = () => {
 
 								<TableCell>{vitals.heart_rate}</TableCell>
 
-                                <TableCell>{vitals.temperature} °C</TableCell>
+								<TableCell>{vitals.temperature} °C</TableCell>
 
-                                <TableCell>{vitals.weight}</TableCell>
+								<TableCell>{vitals.weight}</TableCell>
 
-                                <TableCell>{vitals.click_count}</TableCell>
+								<TableCell>{vitals.click_count}</TableCell>
 
 								<TableCell>{vitals.duration}</TableCell>
 							</TableRow>

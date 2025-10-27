@@ -47,11 +47,28 @@ export function useSupabaseMutation<Row extends object>(
 				break;
 			}
 
+			// case "delete": {
+			// 	if (!filters?.length)
+			// 		throw new Error("Delete requires filters");
+			// 	let query = base.delete();
+			// 	for (const f of filters) query = query.eq(f.column, f.value);
+			// 	response = await query;
+			// 	break;
+			// }
+
 			case "delete": {
-				if (!filters?.length)
-					throw new Error("Delete requires filters");
+				if (!filters?.length) throw new Error("Delete requires filters");
+
 				let query = base.delete();
-				for (const f of filters) query = query.eq(f.column, f.value);
+
+				for (const f of filters) {
+					if (Array.isArray(f.value)) {
+						query = query.in(f.column, f.value);
+					} else {
+						query = query.eq(f.column, f.value);
+					}
+				}
+
 				response = await query;
 				break;
 			}

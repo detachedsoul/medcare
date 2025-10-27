@@ -154,7 +154,7 @@ const RecordVitals = () => {
 		recordVitals({
 			...payload,
 		});
-	};
+    };
 
 	const formatTime = (t: number) => {
 		const minutes = Math.floor(t / 60);
@@ -206,7 +206,7 @@ const RecordVitals = () => {
 			<div className="grid gap-4">
 				<form
 					className="grid gap-4 items-start md:grid-cols-2 lg:grid-cols-3"
-					onSubmit={() => handleSubmit(onSubmit)}
+					onSubmit={(e) => handleSubmit(onSubmit)(e)}
 				>
 					<label className="grid gap-2">
 						<span className="font-poppins font-medium text-sm">
