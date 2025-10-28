@@ -17,10 +17,10 @@ const DashboardLayout = ({ children }: { children: React.ReactNode; }) => {
     }
 
     return (
-		<div className="md:flex relative">
+		<div className="lg:flex relative">
 			<Header />
 
-			<div className="w-full min-h-dvh md:ml-[20%]">
+			<div className="w-full min-h-dvh lg:ml-[20%]">
 				<div className="p-4 border-b border-gray sticky top-14 bg-background z-50 md:top-0">
 					<p>Welcome back. 👋</p>
 

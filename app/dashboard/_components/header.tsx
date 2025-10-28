@@ -45,8 +45,8 @@ const Header = () => {
     }, [pathname]);
 
 	return (
-		<header className="sticky top-0 z-1024 w-full md:w-1/5 bg-secondary text-white md:h-dvh md:fixed md:left-0 md:top-0">
-			<div className="flex items-center justify-between gap-4 p-4 md:hidden">
+		<header className="sticky top-0 z-1024 w-full lg:w-1/5 bg-secondary text-white lg:h-dvh lg:fixed lg:left-0 lg:top-0">
+			<div className="flex items-center justify-between gap-4 p-4 lg:hidden">
 				<p className="font-poppins font-bold">MedCare</p>
 
 				<button
@@ -61,22 +61,22 @@ const Header = () => {
 			</div>
 
 			<div
-				className={`bg-secondary p-4 transition-transform ease-in-out duration-300 text-white absolute top-full left-0 w-full md:translate-y-0 md:static md:p-0 ${
+				className={`bg-secondary p-4 transition-transform ease-in-out duration-300 text-white absolute top-full left-0 w-full lg:translate-y-0 lg:static lg:p-0 ${
 					navIsOpen ? "translate-y-0" : "-translate-y-[200%]"
 				}`}
 			>
 				<Link
-					className="font-bold font-poppins hidden md:block border-b border-background/40 p-4"
+					className="font-bold font-poppins hidden lg:block border-b border-background/40 p-4"
 					href="/dashboard"
 				>
 					MedCare
 				</Link>
 
-				<ul className="grid gap-2 md:p-4">
+				<ul className="grid gap-2 lg:p-4">
 					{navLinks.map((link) => (
 						<li key={link.route}>
 							<Link
-								className={`flex items-center gap-2 p-3 rounded-lg md:py-2 ${
+								className={`flex items-center gap-2 p-3 rounded-lg lg:py-2 ${
 									pathname === link.route
 										? "bg-background/20 text-white"
 										: "hover:bg-background/20 hover:text-white"

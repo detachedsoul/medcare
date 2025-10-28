@@ -52,6 +52,8 @@ const vitalsSchema = z.object({
 		.refine((val) => parseFloat(val) > 0, {
 			message: "Weight must be greater than 0",
 		}),
+
+	clinician_name: z.string(),
 });
 
 type VitalsFormData = z.infer<typeof vitalsSchema>;
@@ -141,14 +143,16 @@ const RecordVitals = () => {
 		const bloodPressure = `${data.systolic}/${data.diastolic}`;
 
 		const payload = {
-            weight: data.weight,
+			weight: data.weight,
 			duration: time,
 			blood_pressure: bloodPressure,
 			heart_rate: Number(data.heart_rate),
-            click_count: clickCount,
-            staff_id: code,
-            patient_name: data.patient_name,
-            temperature: data.temperature,
+			click_count: clickCount,
+			staff_id: code,
+			patient_name: data.patient_name,
+			temperature: data.temperature,
+			clinician_name: data.clinician_name ?? null,
+			task_id: "VITALS01",
 		};
 
 		recordVitals({
@@ -175,7 +179,9 @@ const RecordVitals = () => {
 		window.addEventListener("click", handleClick);
 
 		return () => window.removeEventListener("click", handleClick);
-	}, [isRunning]);
+    }, [isRunning]);
+
+    console.log(errors)
 
 	return (
 		<div className="bg-white p-4 rounded-xl grid gap-6">
@@ -205,9 +211,23 @@ const RecordVitals = () => {
 
 			<div className="grid gap-4">
 				<form
-					className="grid gap-4 items-start md:grid-cols-2 lg:grid-cols-3"
+					className="grid gap-4 items-start md:grid-cols-3"
 					onSubmit={(e) => handleSubmit(onSubmit)(e)}
 				>
+					<label className="grid gap-2">
+						<span className="font-poppins font-medium text-sm">
+							Clinician Name (Optional)
+						</span>
+
+						<input
+							className="input md:py-2 rounded-lg"
+							type="text"
+							placeholder="Enter patient's name"
+							disabled={!isRunning}
+							{...register("clinician_name")}
+						/>
+					</label>
+
 					<label className="grid gap-2">
 						<span className="font-poppins font-medium text-sm">
 							Patient Name
