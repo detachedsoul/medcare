@@ -1,3 +1,7 @@
+"use client";
+
+import { useClinicianCode } from "@/hooks/use-clinician-code";
+import { useQuery } from "@/hooks/use-query";
 import {
 	HeartPulseIcon,
 	TestTubeIcon,
@@ -5,6 +9,15 @@ import {
 } from "lucide-react";
 
 const PatientCountSummary = () => {
+    const { code, isLoading } = useClinicianCode();
+
+	const { data, isFetching } = useQuery({
+		table: "vitals",
+		filters: [{ column: "staff_id", value: code }],
+		enabled: !isLoading,
+		key: ["vitals"],
+    });
+
 	return (
 		<div className="grid gap-4">
 			<div>
@@ -27,7 +40,13 @@ const PatientCountSummary = () => {
 						</h3>
 					</div>
 
-					<span className="font-poppins font-medium text-lg">24</span>
+					{isFetching ? (
+						<div className="bg-white animate-pulse rounded-xl p-2 w-1/5" />
+					) : (
+						<span className="font-poppins font-medium text-lg">
+							{(data && data?.length) || 0}
+						</span>
+					)}
 				</div>
 
 				<div className="bg-blue/20 p-4 rounded-xl grid gap-4">
@@ -39,7 +58,13 @@ const PatientCountSummary = () => {
 						<h3 className="font-medium font-poppins">Order Labs</h3>
 					</div>
 
-					<span className="font-poppins font-medium text-lg">24</span>
+					{isFetching ? (
+						<div className="bg-white animate-pulse rounded-xl p-2 w-1/5" />
+					) : (
+						<span className="font-poppins font-medium text-lg">
+							{(data && data?.length) || 0}
+						</span>
+					)}
 				</div>
 
 				<div className="bg-green/20 p-4 rounded-xl grid gap-4 max-md:col-span-2 max-md:mx-auto">
@@ -53,7 +78,13 @@ const PatientCountSummary = () => {
 						</h3>
 					</div>
 
-					<span className="font-poppins font-medium text-lg">24</span>
+					{isFetching ? (
+						<div className="bg-white animate-pulse rounded-xl p-2 w-1/5" />
+					) : (
+						<span className="font-poppins font-medium text-lg">
+							{(data && data?.length) || 0}
+						</span>
+					)}
 				</div>
 			</div>
 		</div>
