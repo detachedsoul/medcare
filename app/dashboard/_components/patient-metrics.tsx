@@ -1,59 +1,6 @@
-import Link from "next/link";
-import {
-	Table,
-	TableBody,
-	TableCaption,
-	TableCell,
-	TableFooter,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
-
-const invoices = [
-	{
-		invoice: "INV001",
-		paymentStatus: "Paid",
-		totalAmount: "$250.00",
-		paymentMethod: "Credit Card",
-	},
-	{
-		invoice: "INV002",
-		paymentStatus: "Pending",
-		totalAmount: "$150.00",
-		paymentMethod: "PayPal",
-	},
-	{
-		invoice: "INV003",
-		paymentStatus: "Unpaid",
-		totalAmount: "$350.00",
-		paymentMethod: "Bank Transfer",
-	},
-	{
-		invoice: "INV004",
-		paymentStatus: "Paid",
-		totalAmount: "$450.00",
-		paymentMethod: "Credit Card",
-	},
-	{
-		invoice: "INV005",
-		paymentStatus: "Paid",
-		totalAmount: "$550.00",
-		paymentMethod: "PayPal",
-	},
-	{
-		invoice: "INV006",
-		paymentStatus: "Pending",
-		totalAmount: "$200.00",
-		paymentMethod: "Bank Transfer",
-	},
-	{
-		invoice: "INV007",
-		paymentStatus: "Unpaid",
-		totalAmount: "$300.00",
-		paymentMethod: "Credit Card",
-	},
-];
+import VitalsTable from "../vitals/_components/vitals-table";
+import LabsTable from "../labs/_components/labs-table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const PatientMetrics = () => {
 	return (
@@ -66,7 +13,26 @@ const PatientMetrics = () => {
 				<p className="text-sm">Information about your patients</p>
 			</div>
 
-			<div className="overflow-x-auto">
+			<Tabs
+				defaultValue="vitals"
+				className="w-full"
+			>
+				<TabsList>
+					<TabsTrigger value="vitals">Vitals</TabsTrigger>
+					<TabsTrigger value="labs">Order Labs</TabsTrigger>
+					<TabsTrigger value="meds">Reconcile Meds</TabsTrigger>
+				</TabsList>
+
+				<TabsContent value="vitals">
+					<VitalsTable />
+				</TabsContent>
+
+				<TabsContent value="labs">
+					<LabsTable />
+				</TabsContent>
+			</Tabs>
+
+			{/* <div className="overflow-x-auto">
 				<Table>
                     <TableCaption>A list of your recent invoices.</TableCaption>
 
@@ -128,7 +94,7 @@ const PatientMetrics = () => {
 						or reconcile meds.
 					</Link>
 				</div>
-			</div>
+			</div> */}
 		</div>
 	);
 };

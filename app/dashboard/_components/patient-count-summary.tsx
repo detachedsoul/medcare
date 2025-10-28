@@ -18,6 +18,20 @@ const PatientCountSummary = () => {
 		key: ["vitals"],
     });
 
+    const { data: labsData, isFetching: labsIsFetching } = useQuery({
+		table: "order-labs",
+		filters: [{ column: "participant_code", value: code }],
+		enabled: !isLoading,
+		key: ["order-labs"],
+    });
+
+    const { data: medsData, isFetching: medsIsFetching } = useQuery({
+		table: "reconcile-meds",
+		filters: [{ column: "participant_code", value: code }],
+		enabled: !isLoading,
+		key: ["reconcile-meds"],
+    });
+
 	return (
 		<div className="grid gap-4">
 			<div>
@@ -58,11 +72,11 @@ const PatientCountSummary = () => {
 						<h3 className="font-medium font-poppins">Order Labs</h3>
 					</div>
 
-					{isFetching ? (
+					{labsIsFetching ? (
 						<div className="bg-white animate-pulse rounded-xl p-2 w-1/5" />
 					) : (
 						<span className="font-poppins font-medium text-lg">
-							{(data && data?.length) || 0}
+							{(labsData && labsData?.length) || 0}
 						</span>
 					)}
 				</div>
@@ -78,11 +92,11 @@ const PatientCountSummary = () => {
 						</h3>
 					</div>
 
-					{isFetching ? (
+					{medsIsFetching ? (
 						<div className="bg-white animate-pulse rounded-xl p-2 w-1/5" />
 					) : (
 						<span className="font-poppins font-medium text-lg">
-							{(data && data?.length) || 0}
+							{(medsData && medsData?.length) || 0}
 						</span>
 					)}
 				</div>

@@ -65,7 +65,7 @@ interface Labs {
 const labsSchema = z.object({
 	patient_name: z.string().min(2, "Patient name is required"),
 
-    clinician_name: z.string(),
+	clinician_name: z.string(),
 
 	date: z.string().min(1, "Please enter a date"),
 });
@@ -78,9 +78,9 @@ const RecordLabs = () => {
 	const [isRunning, setIsRunning] = useState(false);
 	const [time, setTime] = useState(0);
 	const [clickCount, setClickCount] = useState(0);
-    const [location, setLocation] = useState("");
+	const [location, setLocation] = useState("");
 
-    const [open, setOpen] = React.useState(false);
+	const [open, setOpen] = React.useState(false);
 	const [testName, setTestName] = React.useState("");
 
 	const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -123,9 +123,9 @@ const RecordLabs = () => {
 		isError,
 		error,
 	} = useSupabaseMutation<Labs>({
-		table: "order-labs",
+		table: "reconcile-meds",
 		type: "insert",
-		invalidateKey: ["order-labs"],
+		invalidateKey: ["reconcile-meds"],
 		onSuccess: () => {
 			successToast("Record added successfully.");
 
@@ -133,9 +133,9 @@ const RecordLabs = () => {
 
 			reset();
 
-            setTestName("");
+			setTestName("");
 
-            setLocation("");
+			setLocation("");
 		},
 		onError: (error) => {
 			errorToast(error.message);
@@ -169,13 +169,13 @@ const RecordLabs = () => {
 			participant_code: code,
 			task_id: "LABS01",
 			location: location,
-            test_name: testName
+			test_name: testName,
 		};
 
 		recordLabs({
 			...payload,
 		});
-    };
+	};
 
 	const formatTime = (t: number) => {
 		const minutes = Math.floor(t / 60);
@@ -341,8 +341,8 @@ const RecordLabs = () => {
 						</span>
 
 						<div>
-                            <Select
-                                value={location}
+							<Select
+								value={location}
 								onValueChange={(selected) =>
 									setLocation(selected)
 								}
