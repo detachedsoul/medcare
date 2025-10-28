@@ -19,19 +19,37 @@ interface UseSupabaseMutationOptions<Row extends object> {
 	onError?: (error: Error) => void;
 }
 
+type MutationArg<Row extends object> =
+	| Partial<Row>
+	| { payload: Partial<Row>; filters?: Filter[] };
+
 /**
  * Universal Supabase mutation hook (insert, update, delete)
  * Automatically invalidates related queries after success.
  */
 export function useSupabaseMutation<Row extends object>(
 	options: UseSupabaseMutationOptions<Row>,
-): UseMutationResult<Row[] | null, Error, Partial<Row>, unknown> {
+): UseMutationResult<
+	Row[] | null,
+	Error,
+	Partial<Row> | { payload: Partial<Row>; filters?: Filter[] },
+	unknown
+> {
 	const { table, type, filters, invalidateKey, onSuccess, onError } = options;
 	const qc = useQueryClient();
 
-	const mutationFn = async (payload: Partial<Row>): Promise<Row[] | null> => {
+	const mutationFn = async (
+		variables: MutationArg<Row>,
+	): Promise<Row[] | null> => {
+		const payload = "payload" in variables ? variables.payload : variables;
+
+		const dynamicFilters =
+			"filters" in variables ? variables.filters : undefined;
+
 		const base = supabase.from(table);
 		let response;
+
+		const activeFilters = dynamicFilters ?? filters;
 
 		switch (type) {
 			case "insert":
@@ -39,29 +57,30 @@ export function useSupabaseMutation<Row extends object>(
 				break;
 
 			case "update": {
-				if (!filters?.length)
+				if (!activeFilters?.length)
 					throw new Error("Update requires filters");
+
 				let query = base.update(payload);
-				for (const f of filters) query = query.eq(f.column, f.value);
+
+				for (const f of activeFilters) {
+					if (Array.isArray(f.value)) {
+						query = query.in(f.column, f.value);
+					} else {
+						query = query.eq(f.column, f.value);
+					}
+				}
+
 				response = await query.select();
 				break;
 			}
 
-			// case "delete": {
-			// 	if (!filters?.length)
-			// 		throw new Error("Delete requires filters");
-			// 	let query = base.delete();
-			// 	for (const f of filters) query = query.eq(f.column, f.value);
-			// 	response = await query;
-			// 	break;
-			// }
-
 			case "delete": {
-				if (!filters?.length) throw new Error("Delete requires filters");
+				if (!activeFilters?.length)
+					throw new Error("Delete requires filters");
 
 				let query = base.delete();
 
-				for (const f of filters) {
+				for (const f of activeFilters) {
 					if (Array.isArray(f.value)) {
 						query = query.in(f.column, f.value);
 					} else {

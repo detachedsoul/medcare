@@ -1,7 +1,7 @@
 import LabsTable from "./_components/labs-table";
 import RecordLabs from "./_components/record-labs";
 
-const CoreVitals = () => {
+const Labs = () => {
 	return (
 		<div className="grid gap-4">
 			<RecordLabs />
@@ -11,4 +11,4 @@ const CoreVitals = () => {
 	);
 };
 
-export default CoreVitals;
+export default Labs;

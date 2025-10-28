@@ -203,10 +203,8 @@ const RecordLabs = () => {
 			<div className="flex items-center gap-x-4 gap-y-3 justify-between flex-wrap">
 				<div>
 					<h2 className="font-poppins font-bold text-lg">
-						Patient Metrics
+						Order Labs
 					</h2>
-
-					<p className="text-sm">Information about your patients</p>
 				</div>
 
 				{isRunning ? (
@@ -390,7 +388,7 @@ const RecordLabs = () => {
 					</label>
 
 					{isError && (
-						<p className="text-red font-medium md:col-span-2 lg:col-span-3">
+						<p className="text-red font-medium md:col-span-3">
 							{error?.message || "Something went wrong"}
 						</p>
 					)}

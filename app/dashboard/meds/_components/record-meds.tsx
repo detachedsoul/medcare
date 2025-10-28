@@ -8,46 +8,6 @@ import { useSupabaseMutation } from "@/hooks/use-mutation";
 import { errorToast, successToast } from "@/lib/toast";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
 import { redirect } from "next/navigation";
-import {
-	Select,
-	SelectContent,
-	SelectGroup,
-	SelectItem,
-	SelectLabel,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import {
-	Command,
-	CommandEmpty,
-	CommandGroup,
-	CommandInput,
-	CommandItem,
-	CommandList,
-} from "@/components/ui/command";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
-import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
-import React from "react";
-
-const tests = [
-	{
-		value: "FBC Full Blood Count",
-		label: "FBC Full Blood Count",
-	},
-	{
-		value: "U&E Urea & Electrolytes",
-		label: "U&E Urea & Electrolytes",
-	},
-	{
-		value: "LFT Liver Function Tests",
-		label: "LFT Liver Function Tests",
-	},
-];
 
 interface Labs {
 	id: string;
@@ -65,9 +25,13 @@ interface Labs {
 const labsSchema = z.object({
 	patient_name: z.string().min(2, "Patient name is required"),
 
-	clinician_name: z.string(),
+	drug_name: z.string().min(2, "Drug name is required"),
 
-	date: z.string().min(1, "Please enter a date"),
+    drug_strength: z.string().min(2, "Drug quantity is required"),
+
+	frequency: z.string().min(2, "Drug frequency is required"),
+
+	clinician_name: z.string(),
 });
 
 type LabsFormData = z.infer<typeof labsSchema>;
@@ -78,10 +42,6 @@ const RecordLabs = () => {
 	const [isRunning, setIsRunning] = useState(false);
 	const [time, setTime] = useState(0);
 	const [clickCount, setClickCount] = useState(0);
-	const [location, setLocation] = useState("");
-
-	const [open, setOpen] = React.useState(false);
-	const [testName, setTestName] = React.useState("");
 
 	const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -132,10 +92,6 @@ const RecordLabs = () => {
 			handleResetTimer();
 
 			reset();
-
-			setTestName("");
-
-			setLocation("");
 		},
 		onError: (error) => {
 			errorToast(error.message);
@@ -167,9 +123,7 @@ const RecordLabs = () => {
 			duration: time,
 			click_count: clickCount,
 			participant_code: code,
-			task_id: "LABS01",
-			location: location,
-			test_name: testName,
+			task_id: "MEDS01",
 		};
 
 		recordLabs({
@@ -203,10 +157,8 @@ const RecordLabs = () => {
 			<div className="flex items-center gap-x-4 gap-y-3 justify-between flex-wrap">
 				<div>
 					<h2 className="font-poppins font-bold text-lg">
-						Patient Metrics
+						Add a medication
 					</h2>
-
-					<p className="text-sm">Information about your patients</p>
 				</div>
 
 				{isRunning ? (
@@ -265,132 +217,66 @@ const RecordLabs = () => {
 
 					<label className="grid gap-2">
 						<span className="font-poppins font-medium text-sm">
-							Test Name
-						</span>
-
-						<div>
-							<Popover
-								open={open}
-								onOpenChange={setOpen}
-							>
-								<PopoverTrigger asChild>
-									<button
-										className="input w-full text-left md:py-2 rounded-lg"
-										type="button"
-									>
-										{testName
-											? tests.find(
-													(test) =>
-														test.value === testName,
-											  )?.label
-											: "Select test..."}
-									</button>
-								</PopoverTrigger>
-
-								<PopoverContent className="p-0">
-									<Command>
-										<CommandInput
-											placeholder="Search test..."
-											className="h-9"
-										/>
-										<CommandList>
-											<CommandEmpty>
-												No test found.
-											</CommandEmpty>
-
-											<CommandGroup>
-												{tests.map((test) => (
-													<CommandItem
-														key={test.value}
-														value={test.value}
-														onSelect={(
-															currentValue,
-														) => {
-															setTestName(
-																currentValue ===
-																	testName
-																	? ""
-																	: currentValue,
-															);
-															setOpen(false);
-														}}
-													>
-														{test.label}
-														<Check
-															className={cn(
-																"ml-auto",
-																testName ===
-																	test.value
-																	? "opacity-100"
-																	: "opacity-0",
-															)}
-														/>
-													</CommandItem>
-												))}
-											</CommandGroup>
-										</CommandList>
-									</Command>
-								</PopoverContent>
-							</Popover>
-						</div>
-					</label>
-
-					<label className="grid gap-2">
-						<span className="font-poppins font-medium text-sm">
-							Lab Location
-						</span>
-
-						<div>
-							<Select
-								value={location}
-								onValueChange={(selected) =>
-									setLocation(selected)
-								}
-							>
-								<SelectTrigger className="w-full input md:py-2 rounded-lg h-full">
-									<SelectValue placeholder="Select a lab location" />
-								</SelectTrigger>
-
-								<SelectContent>
-									<SelectGroup>
-										<SelectLabel>Lab Location</SelectLabel>
-
-										<SelectItem value="Local Lab">
-											Local Lab
-										</SelectItem>
-
-										<SelectItem value="External Lab">
-											External Lab
-										</SelectItem>
-									</SelectGroup>
-								</SelectContent>
-							</Select>
-						</div>
-					</label>
-
-					<label className="grid gap-2">
-						<span className="font-poppins font-medium text-sm">
-							Date
+							Name (e.g., Atorvastatin)
 						</span>
 
 						<input
 							className="input md:py-2 rounded-lg"
-							type="date"
-							inputMode="numeric"
-							placeholder="Enter heart rate"
+							type="text"
+							placeholder="Enter patient's name"
 							disabled={!isRunning}
-							{...register("date")}
+							{...register("drug_name")}
 						/>
 
-						{errors.date && (
+						{errors.drug_name && (
 							<p className="text-red text-sm">
-								{errors.date.message}
+								{errors.drug_name.message}
+							</p>
+						)}
+					</label>
+
+					<label className="grid gap-2">
+						<span className="font-poppins font-medium text-sm">
+							Strength (e.g., 20 mg)
+						</span>
+
+						<input
+							className="input md:py-2 rounded-lg"
+							type="text"
+							placeholder="Enter patient's name"
+							disabled={!isRunning}
+							{...register("drug_strength")}
+						/>
+
+						{errors.drug_strength && (
+							<p className="text-red text-sm">
+								{errors.drug_strength.message}
+							</p>
+						)}
+					</label>
+
+                    <label className="grid gap-2">
+						<span className="font-poppins font-medium text-sm">
+							Frequency (e.g., Nightly)
+						</span>
+
+						<input
+							className="input md:py-2 rounded-lg"
+							type="text"
+							placeholder="Enter patient's name"
+							disabled={!isRunning}
+							{...register("frequency")}
+						/>
+
+						{errors.frequency && (
+							<p className="text-red text-sm">
+								{errors.frequency.message}
 							</p>
 						)}
 					</label>
 
 					{isError && (
-						<p className="text-red font-medium md:col-span-2 lg:col-span-3">
+						<p className="text-red font-medium md:col-span-3">
 							{error?.message || "Something went wrong"}
 						</p>
 					)}
@@ -402,13 +288,11 @@ const RecordLabs = () => {
 							disabled={
 								!isRunning ||
 								!isValid ||
-								isPending ||
-								!location ||
-								!testName
+								isPending
 							}
 						>
 							{isPending
-								? "Recording details..."
+								? "Adding medication..."
 								: "Complete Task"}
 						</button>
 

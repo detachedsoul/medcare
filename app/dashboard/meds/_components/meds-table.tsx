@@ -16,40 +16,42 @@ import { useQuery } from "@/hooks/use-query";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
 import { useSupabaseMutation } from "@/hooks/use-mutation";
 import { successToast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
 
-interface Labs {
+interface Meds {
 	id: string;
 	participant_code: string;
 	patient_name: string;
 	click_count: number;
 	duration: number;
-	date: string;
-	location: string;
 	clinician_name: string;
-	test_name: string;
 	task_id: string;
+	drug_name: string;
+	drug_strength: string;
+	frequency: string;
+	is_active: boolean;
 }
 
-const LabsTable = () => {
+const MedsTable = () => {
 	const { code, isLoading } = useClinicianCode();
 
 	const [selected, setSelected] = useState<string[]>([]);
 
-	const { data, error, isFetching } = useQuery<Labs>({
-		table: "order-labs",
+	const { data, error, isFetching } = useQuery<Meds>({
+		table: "reconcile-meds",
 		filters: [{ column: "participant_code", value: code }],
 		enabled: !isLoading,
-		key: ["order-labs"],
+		key: ["reconcile-meds"],
 	});
 
 	const {
 		mutate: deleteRecord,
 		isPending,
 		error: deletionError,
-	} = useSupabaseMutation<Labs>({
-		table: "order-labs",
+	} = useSupabaseMutation<Meds>({
+		table: "reconcile-meds",
 		type: "delete",
-		invalidateKey: ["order-labs"],
+		invalidateKey: ["reconcile-meds"],
 		filters: [
 			{ column: "participant_code", value: code },
 			{ column: "id", value: selected },
@@ -69,15 +71,15 @@ const LabsTable = () => {
 		}
 
 		if (checked) {
-			setSelected(data.map((Labs) => Labs.id));
+			setSelected(data.map((Meds) => Meds.id));
 		} else {
 			setSelected([]);
 		}
 	};
 
-	const toggleSelect = (LabsId: string, checked: boolean) => {
+	const toggleSelect = (MedsId: string, checked: boolean) => {
 		setSelected((prev) =>
-			checked ? [...prev, LabsId] : prev.filter((id) => id !== LabsId),
+			checked ? [...prev, MedsId] : prev.filter((id) => id !== MedsId),
 		);
 	};
 
@@ -106,7 +108,7 @@ const LabsTable = () => {
 	return (
 		<div className="overflow-x-auto bg-white p-4 rounded-xl space-y-4">
 			<div className="flex gap-4 flex-wrap items-center justify-between">
-				<h2 className="text-lg font-semibold">Labs</h2>
+				<h2 className="text-lg font-semibold">Meds</h2>
 
 				<div className="flex items-center gap-2">
 					<button
@@ -151,11 +153,15 @@ const LabsTable = () => {
 
 						<TableHead>Patient Name</TableHead>
 
-                        <TableHead>Clinician Name</TableHead>
+						<TableHead>Clinician Name</TableHead>
 
-						<TableHead>Test Name</TableHead>
+						<TableHead>Drug Name</TableHead>
 
-						<TableHead>Location</TableHead>
+						<TableHead>Drug Quantity</TableHead>
+
+						<TableHead>Frequency</TableHead>
+
+						<TableHead>Status</TableHead>
 
 						<TableHead>Task ID</TableHead>
 
@@ -166,12 +172,12 @@ const LabsTable = () => {
 				</TableHeader>
 
 				<TableBody>
-					{data?.map((orderLabs) => {
-						const isSelected = selected.includes(orderLabs.id);
+					{data?.map((meds) => {
+						const isSelected = selected.includes(meds.id);
 
 						return (
 							<TableRow
-								key={orderLabs.id}
+								key={meds.id}
 								className={`transition-colors ${
 									isSelected
 										? "bg-gray-50"
@@ -183,7 +189,7 @@ const LabsTable = () => {
 										checked={isSelected}
 										onCheckedChange={(checked) =>
 											toggleSelect(
-												orderLabs.id,
+												meds.id,
 												checked as boolean,
 											)
 										}
@@ -191,26 +197,44 @@ const LabsTable = () => {
 								</TableCell>
 
 								<TableCell className="font-medium">
-									{orderLabs.participant_code}
+									{meds.participant_code}
 								</TableCell>
 
-								<TableCell>{orderLabs.patient_name}</TableCell>
+								<TableCell>{meds.patient_name}</TableCell>
 
 								<TableCell>
-									{orderLabs.clinician_name?.length > 0
-										? orderLabs.clinician_name
+									{meds.clinician_name?.length > 0
+										? meds.clinician_name
 										: "N/A"}
 								</TableCell>
 
-                                <TableCell>{orderLabs.test_name}</TableCell>
+								<TableCell>{meds.drug_name}</TableCell>
 
-                                <TableCell>{orderLabs.location}</TableCell>
+								<TableCell>{meds.drug_strength}</TableCell>
 
-								<TableCell>{orderLabs.task_id}</TableCell>
+								<TableCell>{meds.frequency}</TableCell>
 
-								<TableCell>{orderLabs.click_count}</TableCell>
+								<TableCell>
+									<span
+										className={cn(
+											"py-0.5 px-3 rounded-full h-auto",
+											{
+												"bg-green text-white":
+													meds.is_active,
+												"bg-red text-white":
+													!meds.is_active,
+											},
+										)}
+									>
+										{meds.is_active ? "Active" : "Inactive"}
+									</span>
+								</TableCell>
 
-								<TableCell>{orderLabs.duration}</TableCell>
+								<TableCell>{meds.task_id}</TableCell>
+
+								<TableCell>{meds.click_count}</TableCell>
+
+								<TableCell>{meds.duration}</TableCell>
 							</TableRow>
 						);
 					})}
@@ -220,4 +244,4 @@ const LabsTable = () => {
 	);
 };
 
-export default LabsTable;
+export default MedsTable;
