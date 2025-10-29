@@ -1,6 +1,7 @@
 "use client";
 
 import Loading from "@/app/dashboard/loading";
+import * as XLSX from "xlsx";
 import {
 	Table,
 	TableBody,
@@ -15,7 +16,7 @@ import { TrashIcon, DownloadIcon } from "lucide-react";
 import { useQuery } from "@/hooks/use-query";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
 import { useSupabaseMutation } from "@/hooks/use-mutation";
-import { successToast } from "@/lib/toast";
+import { errorToast, successToast } from "@/lib/toast";
 
 interface Labs {
 	id: string;
@@ -86,7 +87,89 @@ const LabsTable = () => {
 	};
 
 	const handleExport = () => {
-		alert(`Exporting ${selected.length || "all"} invoice(s) to Excel`);
+		if (!data || data.length === 0) {
+			errorToast("No records available to export.");
+
+			return;
+		}
+
+		const exportData =
+			selected.length > 0
+				? data.filter((row) => selected.includes(row.id))
+				: data;
+
+		const formatted = exportData.map((row) => ({
+			"ID": row.id,
+			"Participant Code": row.participant_code,
+			"Patient Name": row.patient_name,
+			"Clinician Name": row.clinician_name || "N/A",
+			"Test Name": row.test_name,
+			"Location": row.location,
+			"Task ID": row.task_id,
+			"Number of Clicks": row.click_count,
+			"Duration": row.duration,
+		}));
+
+		const worksheet = XLSX.utils.json_to_sheet(formatted);
+		XLSX.utils.sheet_add_aoa(worksheet, [["Labs Records Export"]], {
+			origin: "A1",
+		});
+
+		XLSX.utils.sheet_add_json(worksheet, formatted, {
+			origin: "A2",
+			skipHeader: false,
+		});
+
+		XLSX.utils.sheet_add_aoa(worksheet, [["Labs Records Export"]], {
+			origin: "A1",
+		});
+
+		const columnCount = Object.keys(formatted[0]).length;
+		worksheet["!merges"] = [
+			{ s: { r: 0, c: 0 }, e: { r: 0, c: columnCount - 1 } },
+		];
+
+		worksheet["A1"].s = {
+			font: { bold: true, sz: 16 },
+			alignment: { horizontal: "center" },
+		};
+
+		for (let c = 0; c < columnCount; c++) {
+			const cellAddr = XLSX.utils.encode_cell({ r: 1, c });
+			const cell = worksheet[cellAddr];
+
+			if (cell) {
+				cell.s = {
+					font: { bold: true, color: { rgb: "FFFFFF" } },
+					fill: { fgColor: { rgb: "4472C4" } },
+					alignment: { horizontal: "center" },
+				};
+			}
+		}
+
+		const colWidths = Object.keys(formatted[0]).map((key) => {
+			const maxLength = Math.max(
+				key.length,
+				...formatted.map((row) =>
+					row[key as keyof typeof row]
+						? String(row[key as keyof typeof row]).length
+						: 0,
+				),
+			);
+			return { wch: maxLength + 2 };
+		});
+		worksheet["!cols"] = colWidths;
+
+		const workbook = XLSX.utils.book_new();
+		XLSX.utils.book_append_sheet(workbook, worksheet, "Labs");
+
+		XLSX.writeFile(workbook, `Labs_${new Date().toISOString()}.xlsx`);
+
+		successToast(
+			`Exported ${
+				selected.length || data.length
+			} record(s) successfully.`,
+		);
 	};
 
 	if (isFetching || isPending) {
