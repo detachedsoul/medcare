@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useSupabaseMutation } from "@/hooks/use-mutation";
 import { errorToast, successToast } from "@/lib/toast";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
-import { redirect } from "next/navigation";
 
 interface Vitals {
 	id: string;
@@ -121,13 +120,7 @@ const RecordVitals = () => {
 	});
 
     const onSubmit = async (data: VitalsFormData) => {
-        if (!code) {
-            errorToast("Invalid signed in user.");
-
-            redirect("/auth/sign-in")
-        }
-
-		if (!isRunning) {
+        if (!isRunning) {
 			errorToast("Start the timer before completing the task.");
 			return;
 		}
@@ -148,7 +141,7 @@ const RecordVitals = () => {
 			blood_pressure: bloodPressure,
 			heart_rate: Number(data.heart_rate),
 			click_count: clickCount,
-			staff_id: code,
+			staff_id: code ?? "",
 			patient_name: data.patient_name,
 			temperature: data.temperature,
 			clinician_name: data.clinician_name ?? null,

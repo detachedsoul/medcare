@@ -1,5 +1,6 @@
 "use client";
 
+import { Resend } from "resend";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -7,36 +8,38 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useSupabaseMutation } from "@/hooks/use-mutation";
 import { errorToast, successToast } from "@/lib/toast";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
-import { redirect } from "next/navigation";
 
-interface Labs {
+interface Meds {
 	id: string;
 	participant_code: string;
 	patient_name: string;
 	click_count: number;
 	duration: number;
-	date: string;
-	location: string;
 	clinician_name: string;
-	test_name: string;
 	task_id: string;
+	drug_name: string;
+	drug_strength: string;
+	frequency: string;
+	is_active: boolean;
 }
 
-const labsSchema = z.object({
+const MedsSchema = z.object({
 	patient_name: z.string().min(2, "Patient name is required"),
 
 	drug_name: z.string().min(2, "Drug name is required"),
 
-    drug_strength: z.string().min(2, "Drug quantity is required"),
+	drug_strength: z.string().min(2, "Drug quantity is required"),
 
 	frequency: z.string().min(2, "Drug frequency is required"),
 
 	clinician_name: z.string(),
 });
 
-type LabsFormData = z.infer<typeof labsSchema>;
+type MedsFormData = z.infer<typeof MedsSchema>;
 
-const RecordLabs = () => {
+const RecordMeds = () => {
+	const resend = new Resend(process.env.NEXT_PUBLIC_RESEND_API_KEY || "");
+
 	const { code } = useClinicianCode();
 
 	const [isRunning, setIsRunning] = useState(false);
@@ -50,8 +53,8 @@ const RecordLabs = () => {
 		handleSubmit,
 		reset,
 		formState: { errors, isValid },
-	} = useForm<LabsFormData>({
-		resolver: zodResolver(labsSchema),
+	} = useForm<MedsFormData>({
+		resolver: zodResolver(MedsSchema),
 		mode: "onChange",
 	});
 
@@ -78,18 +81,137 @@ const RecordLabs = () => {
 	};
 
 	const {
-		mutate: recordLabs,
+		mutate: recordMeds,
 		isPending,
 		isError,
 		error,
-	} = useSupabaseMutation<Labs>({
+	} = useSupabaseMutation<Meds>({
 		table: "reconcile-meds",
 		type: "insert",
 		invalidateKey: ["reconcile-meds"],
-		onSuccess: () => {
+        onSuccess: async (data) => {
+            console.log(data);
+
+            const newRecord = data?.[0];
+
 			successToast("Record added successfully.");
 
-			handleResetTimer();
+           await resend.emails.send({
+				from: "ojimahwisdom01@gmail.com",
+				to: "ojimahwisdom@gmail.com",
+				subject: `🧾 New Medication Record for ${newRecord?.patient_name}`,
+				html: `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8" />
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                    <title>New Medication Record</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            background-color: #f9fafb;
+                            color: #111827;
+                            margin: 0;
+                            padding: 0;
+                        }
+                        .container {
+                            max-width: 600px;
+                            margin: 40px auto;
+                            background: white;
+                            padding: 24px;
+                            border-radius: 12px;
+                            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                        }
+                        h1 {
+                            color: #16a34a;
+                            font-size: 20px;
+                            margin-bottom: 16px;
+                        }
+                        p {
+                            font-size: 15px;
+                            line-height: 1.6;
+                            margin: 8px 0;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 16px;
+                        }
+                        th, td {
+                            text-align: left;
+                            padding: 10px;
+                            border-bottom: 1px solid #e5e7eb;
+                        }
+                        th {
+                            background-color: #f3f4f6;
+                            color: #374151;
+                            font-weight: 600;
+                        }
+                        .footer {
+                            margin-top: 32px;
+                            font-size: 13px;
+                            color: #6b7280;
+                            text-align: center;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h1>New Medication Record Created</h1>
+                        <p>A new medication record has been added successfully. Below are the details:</p>
+
+                        <table>
+                            <tr>
+                                <th>Clinician</th>
+                                <td>${newRecord?.clinician_name || "N/A"}</td>
+                            </tr>
+                            <tr>
+                                <th>Patient Name</th>
+                                <td>${newRecord?.patient_name}</td>
+                            </tr>
+                            <tr>
+                                <th>Drug Name</th>
+                                <td>${newRecord?.drug_name}</td>
+                            </tr>
+                            <tr>
+                                <th>Drug Strength</th>
+                                <td>${newRecord?.drug_strength}</td>
+                            </tr>
+                            <tr>
+                                <th>Frequency</th>
+                                <td>${newRecord?.frequency}</td>
+                            </tr>
+                            <tr>
+                                <th>Participant Code</th>
+                                <td>${code}</td>
+                            </tr>
+                            <tr>
+                                <th>Task ID</th>
+                                <td>MEDS01</td>
+                            </tr>
+                            <tr>
+                                <th>Duration</th>
+                                <td>${time} seconds</td>
+                            </tr>
+                            <tr>
+                                <th>Click Count</th>
+                                <td>${clickCount}</td>
+                            </tr>
+                        </table>
+
+                        <p style="margin-top: 24px;">Keep up the great work! 🎉</p>
+
+                        <div class="footer">
+                            <p>This is an automated message from your Med Reconciliation System.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `,
+           });
+
+            handleResetTimer();
 
 			reset();
 		},
@@ -98,13 +220,7 @@ const RecordLabs = () => {
 		},
 	});
 
-	const onSubmit = async (data: LabsFormData) => {
-		if (!code) {
-			errorToast("Invalid signed in user.");
-
-			redirect("/auth/sign-in");
-		}
-
+	const onSubmit = async (data: MedsFormData) => {
 		if (!isRunning) {
 			errorToast("Start the timer before completing the task.");
 			return;
@@ -122,11 +238,11 @@ const RecordLabs = () => {
 			...data,
 			duration: time,
 			click_count: clickCount,
-			participant_code: code,
+			participant_code: code ?? "",
 			task_id: "MEDS01",
 		};
 
-		recordLabs({
+		recordMeds({
 			...payload,
 		});
 	};
@@ -255,7 +371,7 @@ const RecordLabs = () => {
 						)}
 					</label>
 
-                    <label className="grid gap-2">
+					<label className="grid gap-2">
 						<span className="font-poppins font-medium text-sm">
 							Frequency (e.g., Nightly)
 						</span>
@@ -285,11 +401,7 @@ const RecordLabs = () => {
 						<button
 							className="btn"
 							type="submit"
-							disabled={
-								!isRunning ||
-								!isValid ||
-								isPending
-							}
+							disabled={!isRunning || !isValid || isPending}
 						>
 							{isPending
 								? "Adding medication..."
@@ -310,4 +422,4 @@ const RecordLabs = () => {
 	);
 };
 
-export default RecordLabs;
+export default RecordMeds;

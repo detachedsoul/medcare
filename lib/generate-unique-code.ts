@@ -1,28 +1,7 @@
 import { randomBytes } from "crypto";
-import { supabase } from "./supabase-client";
-import { errorToast } from "./toast";
 
-export async function generateUniqueCode(): Promise<string | null> {
-	let code = "";
-	let exists = true;
-
-	while (exists) {
-		code = generateCode();
-
-		const { data, error } = await supabase
-			.from("clinician")
-			.select("staff_id")
-			.eq("staff_id", code)
-			.maybeSingle();
-
-		if (error) {
-            errorToast(error.message);
-
-            return null;
-		}
-
-		exists = !!data;
-	}
+export function generateUniqueCode(): string {
+	const code = generateCode();
 
 	return code;
 }

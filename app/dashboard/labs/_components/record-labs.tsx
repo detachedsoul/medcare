@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useSupabaseMutation } from "@/hooks/use-mutation";
 import { errorToast, successToast } from "@/lib/toast";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
-import { redirect } from "next/navigation";
 import {
 	Select,
 	SelectContent,
@@ -143,12 +142,6 @@ const RecordLabs = () => {
 	});
 
 	const onSubmit = async (data: LabsFormData) => {
-		if (!code) {
-			errorToast("Invalid signed in user.");
-
-			redirect("/auth/sign-in");
-		}
-
 		if (!isRunning) {
 			errorToast("Start the timer before completing the task.");
 			return;
@@ -166,7 +159,7 @@ const RecordLabs = () => {
 			...data,
 			duration: time,
 			click_count: clickCount,
-			participant_code: code,
+			participant_code: code ?? "",
 			task_id: "LABS01",
 			location: location,
             test_name: testName

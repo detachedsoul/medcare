@@ -1,5 +1,6 @@
 "use client";
 
+import { generateUniqueCode } from "@/lib/generate-unique-code";
 import { useEffect, useState } from "react";
 
 export function useClinicianCode() {
@@ -10,11 +11,14 @@ export function useClinicianCode() {
 		if (typeof window === "undefined") return;
 
 		const timeout = setTimeout(() => {
-			const storedCode = localStorage.getItem("clinician_code") || null;
+			const storedCode =
+				localStorage.getItem("clinician_code") || generateUniqueCode();
 
 			setCode(storedCode);
 
 			setIsLoading(false);
+
+            localStorage.setItem("clinician_code", storedCode);
 		}, 0);
 
 		return () => clearTimeout(timeout);
