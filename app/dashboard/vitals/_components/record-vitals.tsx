@@ -12,6 +12,7 @@ interface Vitals {
 	id: string;
 	staff_id: string;
 	patient_name: string;
+	clinician_name: string;
 	blood_pressure: string;
 	heart_rate: number;
 	temperature: string;
@@ -107,8 +108,141 @@ const RecordVitals = () => {
 		table: "vitals",
 		type: "insert",
 		invalidateKey: ["vitals"],
-		onSuccess: () => {
-			successToast("Vitals recorded successfully.");
+		onSuccess: async (data) => {
+            const newRecord = data?.[0];
+
+            successToast("Vitals recorded successfully.");
+
+            await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					service_id:
+						process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "",
+					template_id:
+						process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "",
+					user_id: process.env.NEXT_PUBLIC_EMAILJS_USER_ID || "",
+					accessToken:
+						process.env.NEXT_PUBLIC_EMAILJS_ACCESS_TOKEN || "",
+					template_params: {
+						to_email: "ayodeji2.okunola@live.uwe.ac.uk",
+						subject: "Order Labs Record Created",
+						body: `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>New Vitals Record</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        background-color: #f9fafb;
+                        color: #111827;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    .container {
+                        max-width: 600px;
+                        margin: 40px auto;
+                        background: white;
+                        padding: 24px;
+                        border-radius: 12px;
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                    }
+                    h1 {
+                        color: #16a34a;
+                        font-size: 20px;
+                        margin-bottom: 16px;
+                    }
+                    p {
+                        font-size: 15px;
+                        line-height: 1.6;
+                        margin: 8px 0;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 16px;
+                    }
+                    th, td {
+                        text-align: left;
+                        padding: 10px;
+                        border-bottom: 1px solid #e5e7eb;
+                    }
+                    th {
+                        background-color: #f3f4f6;
+                        color: #374151;
+                        font-weight: 600;
+                    }
+                    .footer {
+                        margin-top: 32px;
+                        font-size: 13px;
+                        color: #6b7280;
+                        text-align: center;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>New Medication Record Created</h1>
+                    <p>A new medication record has been added successfully. Below are the details:</p>
+
+                    <table>
+                        <tr>
+                            <th>Clinician</th>
+                            <td>${newRecord?.clinician_name || "N/A"}</td>
+                        </tr>
+                        <tr>
+                            <th>Patient Name</th>
+                            <td>${newRecord?.patient_name}</td>
+                        </tr>
+                        <tr>
+                            <th>Blood Pressure</th>
+                            <td>${newRecord?.blood_pressure}</td>
+                        </tr>
+                        <tr>
+                            <th>Heart Rate</th>
+                            <td>${newRecord?.heart_rate}</td>
+                        </tr>
+                        <tr>
+                            <th>Temperature</th>
+                            <td>${newRecord?.temperature} °C</td>
+                        </tr>
+                        <tr>
+                            <th>Weight</th>
+                            <td>${newRecord?.weight}</td>
+                        </tr>
+                        <tr>
+                            <th>Participant Code</th>
+                            <td>${code}</td>
+                        </tr>
+                        <tr>
+                            <th>Task ID</th>
+                            <td>VITALS01</td>
+                        </tr>
+                        <tr>
+                            <th>Duration</th>
+                            <td>${newRecord?.duration} seconds</td>
+                        </tr>
+                        <tr>
+                            <th>Click Count</th>
+                            <td>${newRecord?.click_count}</td>
+                        </tr>
+                    </table>
+
+                    <p style="margin-top: 24px;">Keep up the great work! 🎉</p>
+
+                    <div class="footer">
+                        <p>This is an automated message from your Med Reconciliation System.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            `,
+					},
+				}),
+			});
 
 			handleResetTimer();
 

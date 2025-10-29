@@ -17,6 +17,7 @@ import { useQuery } from "@/hooks/use-query";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
 import { useSupabaseMutation } from "@/hooks/use-mutation";
 import { errorToast, successToast } from "@/lib/toast";
+import { formatDate } from "@/lib/format-date";
 
 interface Vitals {
 	id: string;
@@ -30,6 +31,7 @@ interface Vitals {
 	task_id: string;
 	duration: number;
 	click_count: number;
+	created_at: number;
 }
 
 const VitalsTable = () => {
@@ -254,6 +256,8 @@ const VitalsTable = () => {
 						<TableHead>Number of Clicks</TableHead>
 
 						<TableHead>Duration</TableHead>
+
+						<TableHead>Date</TableHead>
 					</TableRow>
 				</TableHeader>
 
@@ -286,7 +290,7 @@ const VitalsTable = () => {
 									{vitals.staff_id}
 								</TableCell>
 
-                                <TableCell className="font-medium">
+								<TableCell className="font-medium">
 									{vitals.patient_name}
 								</TableCell>
 
@@ -309,6 +313,10 @@ const VitalsTable = () => {
 								<TableCell>{vitals.click_count}</TableCell>
 
 								<TableCell>{vitals.duration}</TableCell>
+
+								<TableCell>
+									{formatDate(new Date(vitals.created_at))}
+								</TableCell>
 							</TableRow>
 						);
 					})}

@@ -18,6 +18,7 @@ import { useClinicianCode } from "@/hooks/use-clinician-code";
 import { useSupabaseMutation } from "@/hooks/use-mutation";
 import { errorToast, successToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format-date";
 
 interface Meds {
 	id: string;
@@ -31,6 +32,7 @@ interface Meds {
 	drug_strength: string;
 	frequency: string;
 	is_active: boolean;
+	created_at: string;
 }
 
 const MedsTable = () => {
@@ -252,6 +254,8 @@ const MedsTable = () => {
 						<TableHead>Number of Clicks</TableHead>
 
 						<TableHead>Duration</TableHead>
+
+						<TableHead>Date</TableHead>
 					</TableRow>
 				</TableHeader>
 
@@ -319,6 +323,10 @@ const MedsTable = () => {
 								<TableCell>{meds.click_count}</TableCell>
 
 								<TableCell>{meds.duration}</TableCell>
+
+								<TableCell>
+									{formatDate(new Date(meds.created_at))}
+								</TableCell>
 							</TableRow>
 						);
 					})}

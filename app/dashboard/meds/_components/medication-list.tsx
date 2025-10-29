@@ -70,8 +70,7 @@ const MedicationListing = () => {
 							>
 								<div>
 									<p className="font-medium">
-										{med.drug_name}
-										{", "} {med.drug_strength}
+										{med.drug_name}&mdash;{med.drug_strength}
 									</p>
 
 									<p

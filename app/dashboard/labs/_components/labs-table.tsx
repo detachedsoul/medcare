@@ -17,6 +17,7 @@ import { useQuery } from "@/hooks/use-query";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
 import { useSupabaseMutation } from "@/hooks/use-mutation";
 import { errorToast, successToast } from "@/lib/toast";
+import { formatDate } from "@/lib/format-date";
 
 interface Labs {
 	id: string;
@@ -29,6 +30,7 @@ interface Labs {
 	clinician_name: string;
 	test_name: string;
 	task_id: string;
+	created_at: string;
 }
 
 const LabsTable = () => {
@@ -234,7 +236,7 @@ const LabsTable = () => {
 
 						<TableHead>Patient Name</TableHead>
 
-                        <TableHead>Clinician Name</TableHead>
+						<TableHead>Clinician Name</TableHead>
 
 						<TableHead>Test Name</TableHead>
 
@@ -285,15 +287,19 @@ const LabsTable = () => {
 										: "N/A"}
 								</TableCell>
 
-                                <TableCell>{orderLabs.test_name}</TableCell>
+								<TableCell>{orderLabs.test_name}</TableCell>
 
-                                <TableCell>{orderLabs.location}</TableCell>
+								<TableCell>{orderLabs.location}</TableCell>
 
 								<TableCell>{orderLabs.task_id}</TableCell>
 
 								<TableCell>{orderLabs.click_count}</TableCell>
 
 								<TableCell>{orderLabs.duration}</TableCell>
+
+								<TableCell>
+									{formatDate(new Date(orderLabs.created_at))}
+								</TableCell>
 							</TableRow>
 						);
 					})}
