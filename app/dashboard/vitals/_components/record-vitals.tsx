@@ -308,8 +308,6 @@ const RecordVitals = () => {
 		return () => window.removeEventListener("click", handleClick);
     }, [isRunning]);
 
-    console.log(errors)
-
 	return (
 		<div className="bg-white p-4 rounded-xl grid gap-6">
 			<div className="flex items-center gap-x-4 gap-y-3 justify-between flex-wrap">

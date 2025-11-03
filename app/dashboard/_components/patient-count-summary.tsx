@@ -2,6 +2,7 @@
 
 import { useClinicianCode } from "@/hooks/use-clinician-code";
 import { useQuery } from "@/hooks/use-query";
+import { exportAllToExcel, RecordData } from "@/lib/export-all";
 import {
 	HeartPulseIcon,
 	TestTubeIcon,
@@ -34,12 +35,31 @@ const PatientCountSummary = () => {
 
 	return (
 		<div className="grid gap-4">
-			<div>
-				<h2 className="font-poppins font-bold text-lg">
-					Quick Summary
-				</h2>
+			<div className="flex items-center justify-between gap-4">
+				<div>
+					<h2 className="font-poppins font-bold text-lg">
+						Quick Summary
+					</h2>
 
-				<p className="text-sm">Get a quick stats of your patients</p>
+					<p className="text-sm">
+						Get a quick stats of your patients
+					</p>
+				</div>
+
+				<button
+					className="btn"
+					onClick={() =>
+						exportAllToExcel(
+							data as RecordData[] || [],
+							medsData as RecordData[] || [],
+							labsData as RecordData[] || [],
+						)
+					}
+					disabled={isFetching || labsIsFetching || medsIsFetching}
+					type="button"
+				>
+					Export All to Excel
+				</button>
 			</div>
 
 			<div className="bg-white p-2 rounded-2xl grid gap-4 grid-cols-2 md:grid-cols-3">
