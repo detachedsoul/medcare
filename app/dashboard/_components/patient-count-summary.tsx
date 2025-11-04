@@ -1,5 +1,6 @@
 "use client";
 
+import ResetUser from "./user-reset-dialog";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
 import { useQuery } from "@/hooks/use-query";
 import { exportAllToExcel, RecordData } from "@/lib/export-all";
@@ -35,7 +36,7 @@ const PatientCountSummary = () => {
 
 	return (
 		<div className="grid gap-4">
-			<div className="flex items-center justify-between gap-4">
+			<div className="flex items-center justify-between flex-wrap gap-4">
 				<div>
 					<h2 className="font-poppins font-bold text-lg">
 						Quick Summary
@@ -46,20 +47,26 @@ const PatientCountSummary = () => {
 					</p>
 				</div>
 
-				<button
-					className="btn"
-					onClick={() =>
-						exportAllToExcel(
-							data as RecordData[] || [],
-							medsData as RecordData[] || [],
-							labsData as RecordData[] || [],
-						)
-					}
-					disabled={isFetching || labsIsFetching || medsIsFetching}
-					type="button"
-				>
-					Export All to Excel
-				</button>
+				<div className="flex items-center gap-4 flex-wrap">
+					<button
+						className="btn py-2"
+						onClick={() =>
+							exportAllToExcel(
+								(data as RecordData[]) || [],
+								(medsData as RecordData[]) || [],
+								(labsData as RecordData[]) || [],
+							)
+						}
+						disabled={
+							isFetching || labsIsFetching || medsIsFetching
+						}
+						type="button"
+					>
+						Export All to Excel
+                    </button>
+
+					<ResetUser />
+				</div>
 			</div>
 
 			<div className="bg-white p-2 rounded-2xl grid gap-4 grid-cols-2 md:grid-cols-3">
