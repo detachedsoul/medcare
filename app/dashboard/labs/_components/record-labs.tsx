@@ -56,15 +56,12 @@ interface Labs {
 	duration: number;
 	date: string;
 	location: string;
-	clinician_name: string;
 	test_name: string;
 	task_id: string;
 }
 
 const labsSchema = z.object({
 	patient_name: z.string().min(2, "Patient name is required"),
-
-    clinician_name: z.string(),
 
 	date: z.string().min(1, "Please enter a date"),
 });
@@ -207,10 +204,6 @@ const RecordLabs = () => {
 
                     <table>
                         <tr>
-                            <th>Clinician</th>
-                            <td>${newRecord?.clinician_name || "N/A"}</td>
-                        </tr>
-                        <tr>
                             <th>Patient Name</th>
                             <td>${newRecord?.patient_name}</td>
                         </tr>
@@ -345,20 +338,6 @@ const RecordLabs = () => {
 					className="grid gap-4 items-start md:grid-cols-2 lg:grid-cols-3"
 					onSubmit={(e) => handleSubmit(onSubmit)(e)}
 				>
-					<label className="grid gap-2">
-						<span className="font-poppins font-medium text-sm">
-							Clinician Name (Optional)
-						</span>
-
-						<input
-							className="input md:py-2 rounded-lg"
-							type="text"
-							placeholder="Enter patient's name"
-							disabled={!isRunning}
-							{...register("clinician_name")}
-						/>
-					</label>
-
 					<label className="grid gap-2">
 						<span className="font-poppins font-medium text-sm">
 							Patient Name

@@ -27,7 +27,6 @@ interface Labs {
 	duration: number;
 	date: string;
 	location: string;
-	clinician_name: string;
 	test_name: string;
 	task_id: string;
 	created_at: string;
@@ -104,7 +103,6 @@ const LabsTable = () => {
 			"ID": row.id,
 			"Participant Code": row.participant_code,
 			"Patient Name": row.patient_name,
-			"Clinician Name": row.clinician_name || "N/A",
 			"Test Name": row.test_name,
 			"Location": row.location,
 			"Task ID": row.task_id,
@@ -236,8 +234,6 @@ const LabsTable = () => {
 
 						<TableHead>Patient Name</TableHead>
 
-						<TableHead>Clinician Name</TableHead>
-
 						<TableHead>Test Name</TableHead>
 
 						<TableHead>Location</TableHead>
@@ -280,12 +276,6 @@ const LabsTable = () => {
 								</TableCell>
 
 								<TableCell>{orderLabs.patient_name}</TableCell>
-
-								<TableCell>
-									{orderLabs.clinician_name?.length > 0
-										? orderLabs.clinician_name
-										: "N/A"}
-								</TableCell>
 
 								<TableCell>{orderLabs.test_name}</TableCell>
 

@@ -12,7 +12,6 @@ interface Vitals {
 	id: string;
 	staff_id: string;
 	patient_name: string;
-	clinician_name: string;
 	blood_pressure: string;
 	heart_rate: number;
 	temperature: string;
@@ -52,8 +51,6 @@ const vitalsSchema = z.object({
 		.refine((val) => parseFloat(val) > 0, {
 			message: "Weight must be greater than 0",
 		}),
-
-	clinician_name: z.string(),
 });
 
 type VitalsFormData = z.infer<typeof vitalsSchema>;
@@ -190,10 +187,6 @@ const RecordVitals = () => {
 
                     <table>
                         <tr>
-                            <th>Clinician</th>
-                            <td>${newRecord?.clinician_name || "N/A"}</td>
-                        </tr>
-                        <tr>
                             <th>Patient Name</th>
                             <td>${newRecord?.patient_name}</td>
                         </tr>
@@ -278,7 +271,6 @@ const RecordVitals = () => {
 			staff_id: code ?? "",
 			patient_name: data.patient_name,
 			temperature: data.temperature,
-			clinician_name: data.clinician_name ?? null,
 			task_id: "VITALS01",
 		};
 
@@ -337,20 +329,6 @@ const RecordVitals = () => {
 					className="grid gap-4 items-start md:grid-cols-3"
 					onSubmit={(e) => handleSubmit(onSubmit)(e)}
 				>
-					<label className="grid gap-2">
-						<span className="font-poppins font-medium text-sm">
-							Clinician Name (Optional)
-						</span>
-
-						<input
-							className="input md:py-2 rounded-lg"
-							type="text"
-							placeholder="Enter patient's name"
-							disabled={!isRunning}
-							{...register("clinician_name")}
-						/>
-					</label>
-
 					<label className="grid gap-2">
 						<span className="font-poppins font-medium text-sm">
 							Patient Name

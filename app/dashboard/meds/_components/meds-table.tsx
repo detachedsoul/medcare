@@ -26,7 +26,6 @@ interface Meds {
 	patient_name: string;
 	click_count: number;
 	duration: number;
-	clinician_name: string;
 	task_id: string;
 	drug_name: string;
 	drug_strength: string;
@@ -106,7 +105,6 @@ const MedsTable = () => {
 			"ID": row.id,
 			"Participant Code": row.participant_code,
 			"Patient Name": row.patient_name,
-			"Clinician Name": row.clinician_name || "N/A",
 			"Drug Name": row.drug_name,
 			"Drug Quantity": row.drug_strength,
 			"Frequency": row.frequency,
@@ -239,8 +237,6 @@ const MedsTable = () => {
 
 						<TableHead>Patient Name</TableHead>
 
-						<TableHead>Clinician Name</TableHead>
-
 						<TableHead>Drug Name</TableHead>
 
 						<TableHead>Drug Quantity</TableHead>
@@ -289,12 +285,6 @@ const MedsTable = () => {
 								</TableCell>
 
 								<TableCell>{meds.patient_name}</TableCell>
-
-								<TableCell>
-									{meds.clinician_name?.length > 0
-										? meds.clinician_name
-										: "N/A"}
-								</TableCell>
 
 								<TableCell>{meds.drug_name}</TableCell>
 

@@ -14,7 +14,6 @@ interface Meds {
 	patient_name: string;
 	click_count: number;
 	duration: number;
-	clinician_name: string;
 	task_id: string;
 	drug_name: string;
 	drug_strength: string;
@@ -30,8 +29,6 @@ const MedsSchema = z.object({
 	drug_strength: z.string().min(2, "Drug quantity is required"),
 
 	frequency: z.string().min(2, "Drug frequency is required"),
-
-	clinician_name: z.string(),
 });
 
 type MedsFormData = z.infer<typeof MedsSchema>;
@@ -168,10 +165,6 @@ const RecordMeds = () => {
 
                     <table>
                         <tr>
-                            <th>Clinician</th>
-                            <td>${newRecord?.clinician_name || "N/A"}</td>
-                        </tr>
-                        <tr>
                             <th>Patient Name</th>
                             <td>${newRecord?.patient_name}</td>
                         </tr>
@@ -304,20 +297,6 @@ const RecordMeds = () => {
 					className="grid gap-4 items-start md:grid-cols-2 lg:grid-cols-3"
 					onSubmit={(e) => handleSubmit(onSubmit)(e)}
 				>
-					<label className="grid gap-2">
-						<span className="font-poppins font-medium text-sm">
-							Clinician Name (Optional)
-						</span>
-
-						<input
-							className="input md:py-2 rounded-lg"
-							type="text"
-							placeholder="Enter patient's name"
-							disabled={!isRunning}
-							{...register("clinician_name")}
-						/>
-					</label>
-
 					<label className="grid gap-2">
 						<span className="font-poppins font-medium text-sm">
 							Patient Name

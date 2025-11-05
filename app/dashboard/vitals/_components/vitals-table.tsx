@@ -27,7 +27,6 @@ interface Vitals {
 	heart_rate: number;
 	temperature: string;
 	weight: string;
-	clinician_name: string;
 	task_id: string;
 	duration: number;
 	click_count: number;
@@ -107,7 +106,6 @@ const VitalsTable = () => {
 			"ID": row.id,
 			"Participant Code": row.staff_id,
 			"Patient Name": row.patient_name,
-			"Clinician Name": row.clinician_name || "N/A",
 			"Blood Pressure": row.blood_pressure,
 			"Heart Rate": row.heart_rate,
 			"Temperature": `${row.temperature} °C`,
@@ -241,8 +239,6 @@ const VitalsTable = () => {
 
 						<TableHead>Patient Name</TableHead>
 
-						<TableHead>Clinician Name</TableHead>
-
 						<TableHead>Task ID</TableHead>
 
 						<TableHead>Blood Pressure</TableHead>
@@ -292,12 +288,6 @@ const VitalsTable = () => {
 
 								<TableCell className="font-medium">
 									{vitals.patient_name}
-								</TableCell>
-
-								<TableCell>
-									{vitals.clinician_name?.length > 0
-										? vitals.clinician_name
-										: "N/A"}
 								</TableCell>
 
 								<TableCell>{vitals.task_id}</TableCell>
