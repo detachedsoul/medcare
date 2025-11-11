@@ -319,13 +319,13 @@ const RecordMeds = () => {
 
 					<label className="grid gap-2">
 						<span className="font-poppins font-medium text-sm">
-							Name (e.g., Atorvastatin)
+							Drug Name (e.g., Atorvastatin)
 						</span>
 
 						<input
 							className="input md:py-2 rounded-lg"
 							type="text"
-							placeholder="Enter patient's name"
+							placeholder="Enter drug name"
 							disabled={!isRunning}
 							{...register("drug_name")}
 						/>
@@ -345,7 +345,7 @@ const RecordMeds = () => {
 						<input
 							className="input md:py-2 rounded-lg"
 							type="text"
-							placeholder="Enter patient's name"
+							placeholder="Enter drug's dosage"
 							disabled={!isRunning}
 							{...register("drug_strength")}
 						/>
@@ -365,7 +365,7 @@ const RecordMeds = () => {
 						<input
 							className="input md:py-2 rounded-lg"
 							type="text"
-							placeholder="Enter patient's name"
+							placeholder="Enter drug use frequency"
 							disabled={!isRunning}
 							{...register("frequency")}
 						/>
