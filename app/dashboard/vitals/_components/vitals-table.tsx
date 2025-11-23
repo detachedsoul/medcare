@@ -29,6 +29,7 @@ interface Vitals {
 	weight: string;
 	task_id: string;
 	click_count: number;
+	error_count: number;
 	created_at: number;
 }
 
@@ -247,7 +248,9 @@ const VitalsTable = () => {
 
 						<TableHead>Weight</TableHead>
 
-						<TableHead>Number of Clicks</TableHead>
+                        <TableHead>Number of Clicks</TableHead>
+
+						<TableHead>Error Count</TableHead>
 
 						<TableHead>Date</TableHead>
 					</TableRow>
@@ -296,7 +299,9 @@ const VitalsTable = () => {
 
 								<TableCell>{vitals.weight}kg</TableCell>
 
-								<TableCell>{vitals.click_count}</TableCell>
+                                <TableCell>{vitals.click_count}</TableCell>
+
+								<TableCell>{vitals.error_count}</TableCell>
 
 								<TableCell>
 									{formatDate(new Date(vitals.created_at))}

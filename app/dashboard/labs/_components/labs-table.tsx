@@ -24,6 +24,7 @@ interface Labs {
 	participant_code: string;
 	patient_id: string;
 	click_count: number;
+	error_count: number;
 	date: string;
 	location: string;
 	test_name: string;
@@ -238,7 +239,9 @@ const LabsTable = () => {
 
 						<TableHead>Task ID</TableHead>
 
-						<TableHead>Number of Clicks</TableHead>
+                        <TableHead>Number of Clicks</TableHead>
+
+						<TableHead>Error Count</TableHead>
 
 						<TableHead>Date</TableHead>
 					</TableRow>
@@ -282,6 +285,8 @@ const LabsTable = () => {
 								<TableCell>{orderLabs.task_id}</TableCell>
 
 								<TableCell>{orderLabs.click_count}</TableCell>
+
+								<TableCell>{orderLabs.error_count}</TableCell>
 
 								<TableCell>
 									{formatDate(new Date(orderLabs.created_at))}

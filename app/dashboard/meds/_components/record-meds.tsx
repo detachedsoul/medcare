@@ -19,6 +19,7 @@ interface Meds {
 	frequency: string;
 	task_id: string;
 	click_count: number;
+	error_count: number;
 	is_active: boolean;
 }
 
@@ -39,6 +40,7 @@ interface NewMedsPayload {
 	participant_code: string;
 	task_id: string;
 	click_count: number;
+	error_count: number;
 	[key: string]: any;
 }
 
@@ -76,18 +78,56 @@ type MedsFormData = z.infer<typeof MedsSchema>;
 const RecordMeds = () => {
 	const { code } = useClinicianCode();
 
+    const firstRunRef = useRef(true);
+
+    const prevErrorsRef = useRef<Set<string>>(new Set());
+
 	const {
 		register,
 		handleSubmit,
 		reset,
 		formState: { errors, isValid },
 	} = useForm<MedsFormData>({
-		resolver: zodResolver(MedsSchema),
+		resolver: async (data, context, options) => {
+			const result = await zodResolver(MedsSchema)(
+				data,
+				context,
+				options,
+			);
+
+			if (firstRunRef.current) {
+				firstRunRef.current = false;
+
+				return result;
+			}
+
+			const currentErrorMessages = Object.values(result.errors)
+				.map((err) => err?.message)
+				.filter(Boolean) as string[];
+
+			currentErrorMessages.forEach((msg) => {
+				if (!prevErrorsRef.current.has(msg)) {
+					prevErrorsRef.current.add(msg);
+					setErrorCount((prev) => prev + 1); // Increment only for new errors
+				}
+			});
+
+			// Remove resolved errors from the set
+			prevErrorsRef.current.forEach((msg) => {
+				if (!currentErrorMessages.includes(msg)) {
+					prevErrorsRef.current.delete(msg);
+				}
+			});
+
+			return result;
+		},
 		mode: "all",
 	});
 
 	const [clickCount, setClickCount] = useState<number>(0);
+	const [errorCount, setErrorCount] = useState<number>(0);
 	const [isCounting, setIsCounting] = useState<boolean>(false);
+	const allErrorsRef = useRef<Set<string>>(new Set());
 	const clickHandlerRef = useRef<(e: MouseEvent) => void>(() => {});
 
 	useEffect(() => {
@@ -102,214 +142,302 @@ const RecordMeds = () => {
 		};
 	}, [isCounting]);
 
-    const onInvalid = async (formErrors: FormErrorsMap): Promise<void> => {
-        const errorList = Object.values(formErrors)
-            .map((err: FormErrorItem | undefined) => `• ${err?.message}`)
-            .join("<br/>");
+	const onInvalid = async (formErrors: FormErrorsMap): Promise<void> => {
+		const errorList = Object.values(formErrors)
+			.map((err: FormErrorItem | undefined) => `• ${err?.message}`)
+			.join("<br/>");
 
-        try {
-            await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    service_id:
-                        process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "",
-                    template_id:
-                        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "",
-                    user_id: process.env.NEXT_PUBLIC_EMAILJS_USER_ID || "",
-                    accessToken:
-                        process.env.NEXT_PUBLIC_EMAILJS_ACCESS_TOKEN || "",
-                    template_params: {
-                        to_email: "ayodeji2.okunola@live.uwe.ac.uk",
-                        subject: "Medication Record – Validation Errors",
-                        body: `
+		try {
+			await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					service_id:
+						process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "",
+					template_id:
+						process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "",
+					user_id: process.env.NEXT_PUBLIC_EMAILJS_USER_ID || "",
+					accessToken:
+						process.env.NEXT_PUBLIC_EMAILJS_ACCESS_TOKEN || "",
+					template_params: {
+						to_email: "ayodeji2.okunola@live.uwe.ac.uk",
+						subject: "Medication Record – Validation Errors",
+						body: `
               <h2>Form Submission Failed</h2>
               <p>The following validation errors occurred:</p>
               <p>${errorList}</p>
+              <p><strong>Total Error Count:</strong> ${errorCount}</p>
             `,
-                    },
-                }),
-            });
-        } catch {
-            errorToast("Form contains errors. They have been emailed.");
-        }
-    };
+					},
+				}),
+			});
+		} catch {
+			errorToast("Form contains errors. They have been emailed.");
+		}
+	};
 
-    // Supabase insert
-    const {
-        mutate: recordMeds,
-        isPending,
-        isError,
-        error,
-    } = useSupabaseMutation<Meds>({
-        table: "reconcile-meds",
-        type: "insert",
-        invalidateKey: ["reconcile-meds"],
-        onSuccess: async (data) => {
-            const newRecord = data?.[0];
+	const {
+		mutate: recordMeds,
+		isPending,
+		isError,
+		error,
+	} = useSupabaseMutation<Meds>({
+		table: "reconcile-meds",
+		type: "insert",
+		invalidateKey: ["reconcile-meds"],
+		onSuccess: async (data) => {
+			const newRecord = data?.[0];
 
-            successToast("Medication recorded.");
+			successToast("Medication recorded.");
 
-            // Send success email (includes click_count)
-            try {
-                await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        service_id:
-                            process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "",
-                        template_id:
-                            process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "",
-                        user_id: process.env.NEXT_PUBLIC_EMAILJS_USER_ID || "",
-                        accessToken:
-                            process.env.NEXT_PUBLIC_EMAILJS_ACCESS_TOKEN || "",
-                        template_params: {
-                            to_email: "ayodeji2.okunola@live.uwe.ac.uk",
-                            subject: "Medication Record Created",
-                            body: `
-                <h1>New Medication Record Created</h1>
-                <table>
-                  <tr><th>Patient ID</th><td>${newRecord?.patient_id}</td></tr>
-                  <tr><th>Drug Name</th><td>${newRecord?.drug_name}</td></tr>
-                  <tr><th>Drug Strength</th><td>${
-                        newRecord?.drug_strength
-                    }</td></tr>
-                  <tr><th>Frequency</th><td>${newRecord?.frequency}</td></tr>
-                  <tr><th>Participant Code</th><td>${code}</td></tr>
-                  <tr><th>Task ID</th><td>MEDS01</td></tr>
-                  <tr><th>Click Count</th><td>${
-                        newRecord?.click_count ?? clickCount
-                    }</td></tr>
-                </table>
-              `,
-                        },
-                    }),
-                });
-            } catch (err: unknown) {
-                console.error("Failed to send success email:", err);
-            }
+			try {
+				await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						service_id:
+							process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "",
+						template_id:
+							process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "",
+						user_id: process.env.NEXT_PUBLIC_EMAILJS_USER_ID || "",
+						accessToken:
+							process.env.NEXT_PUBLIC_EMAILJS_ACCESS_TOKEN || "",
+						template_params: {
+							to_email: "ayodeji2.okunola@live.uwe.ac.uk",
+							subject: "Medication Record Created",
+							body: `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8" />
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                    <title>New Medication Record</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            background-color: #f9fafb;
+                            color: #111827;
+                            margin: 0;
+                            padding: 0;
+                        }
+                        .container {
+                            max-width: 600px;
+                            margin: 40px auto;
+                            background: white;
+                            padding: 24px;
+                            border-radius: 12px;
+                            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                        }
+                        h1 {
+                            color: #16a34a;
+                            font-size: 20px;
+                            margin-bottom: 16px;
+                        }
+                        p {
+                            font-size: 15px;
+                            line-height: 1.6;
+                            margin: 8px 0;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 16px;
+                        }
+                        th, td {
+                            text-align: left;
+                            padding: 10px;
+                            border-bottom: 1px solid #e5e7eb;
+                        }
+                        th {
+                            background-color: #f3f4f6;
+                            color: #374151;
+                            font-weight: 600;
+                        }
+                        .footer {
+                            margin-top: 32px;
+                            font-size: 13px;
+                            color: #6b7280;
+                            text-align: center;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h1>New Medication Record Created</h1>
+                        <p>A new medication record has been added successfully. Below are the details:</p>
 
-            reset();
-            setClickCount(0);
-            setIsCounting(false);
-        },
-        onError: (err: any) => {
-            errorToast(err.message);
-        },
-    });
+                        <table>
+                            <tr>
+                                <th>Patient ID</th>
+                                <td>${newRecord?.patient_id}</td>
+                            </tr>
+                            <tr>
+                                <th>Drug Name</th>
+                                <td>${newRecord?.drug_name}</td>
+                            </tr>
+                            <tr>
+                                <th>Drug Strength</th>
+                                <td>${newRecord?.drug_strength}</td>
+                            </tr>
+                            <tr>
+                                <th>Frequency</th>
+                                <td>${newRecord?.frequency}</td>
+                            </tr>
+                            <tr>
+                                <th>Participant Code</th>
+                                <td>${code}</td>
+                            </tr>
+                            <tr>
+                                <th>Task ID</th>
+                                <td>MEDS01</td>
+                            </tr>
+                            <tr>
+                                <th>Click Count</th>
+                                <td>${newRecord?.click_count ?? clickCount}</td>
+                            </tr>
+                            <tr>
+                                <th>Error Count</th>
+                                <td>${newRecord?.error_count ?? errorCount}</td>
+                            </tr>
+                        </table>
 
-    // Final submit handler — no timer, click_count included
-    const onSubmit = async (data: MedsFormData): Promise<void> => {
-        // stop counting before submitting
-        setIsCounting(false);
+                        <p style="margin-top: 24px;">Keep up the great work! 🎉</p>
 
-        // generate patient id
-        const patientId: string =
-            generateUniqueCode();
-
-        const payload: NewMedsPayload = {
-            ...data,
-            patient_id: patientId,
-            participant_code: code ?? "",
-            task_id: "MEDS01",
-            click_count: clickCount,
-        };
-
-        recordMeds(payload);
-    };
-
-    const handleInputFocus = (): void => {
-        if (!isCounting) setIsCounting(true);
-    };
-
-    return (
-        <div className="bg-white p-4 rounded-xl grid gap-6">
-            <div>
-                <h2 className="font-poppins font-bold text-lg">
-                    Add a medication
-                </h2>
-            </div>
-
-            <div className="grid gap-4">
-                <form
-                    className="grid gap-4 items-start md:grid-cols-2 lg:grid-cols-3"
-                    onSubmit={handleSubmit(onSubmit, onInvalid)}
-                >
-                    <label className="grid gap-2">
-                        <span className="font-poppins font-medium text-sm">
-                            Drug Name (e.g., Atorvastatin)
-                        </span>
-                        <input
-                            className="input md:py-2 rounded-lg"
-                            type="text"
-                            placeholder="Enter drug name"
-                            {...register("drug_name")}
-                            onFocus={handleInputFocus}
-                        />
-
-                        {errors.drug_name && (
-                            <p className="text-red text-sm">
-                                {errors.drug_name.message}
-                            </p>
-                        )}
-                    </label>
-
-                    <label className="grid gap-2">
-                        <span className="font-poppins font-medium text-sm">
-                            Strength (e.g., 20 mg)
-                        </span>
-                        <input
-                            className="input md:py-2 rounded-lg"
-                            type="text"
-                            placeholder="Enter drug dosage"
-                            {...register("drug_strength")}
-                            onFocus={handleInputFocus}
-                        />
-
-                        {errors.drug_strength && (
-                            <p className="text-red text-sm">
-                                {errors.drug_strength.message}
-                            </p>
-                        )}
-                    </label>
-
-                    <label className="grid gap-2">
-                        <span className="font-poppins font-medium text-sm">
-                            Frequency (e.g., Nightly)
-                        </span>
-                        <input
-                            className="input md:py-2 rounded-lg"
-                            type="text"
-                            placeholder="Enter drug use frequency"
-                            {...register("frequency")}
-                            onFocus={handleInputFocus}
-                        />
-                        {errors.frequency && (
-                            <p className="text-red text-sm">
-                                {errors.frequency.message}
-                            </p>
-                        )}
-                    </label>
-
-                    {isError && (
-                        <p className="text-red font-medium md:col-span-3">
-                            {error?.message || "Something went wrong"}
-                        </p>
-                    )}
-
-                    <div className="grid gap-4 md:grid-cols-2 md:col-span-3 mt-4">
-                        <button
-                            className="btn"
-                            type="submit"
-                            disabled={!isValid || isPending}
-                        >
-                            {isPending ? "Adding medication..." : "Submit"}
-                        </button>
+                        <div class="footer">
+                            <p>This is an automated message from your Med Reconciliation System.</p>
+                        </div>
                     </div>
-                </form>
-            </div>
-        </div>
-    );
+                </body>
+                </html>
+              `,
+						},
+					}),
+				});
+			} catch (err: unknown) {
+				console.error("Failed to send success email:", err);
+			}
+
+			reset();
+			setClickCount(0);
+			setErrorCount(0);
+			allErrorsRef.current.clear();
+			setIsCounting(false);
+		},
+		onError: (err: any) => {
+			setErrorCount((prev) => prev + 1);
+			errorToast(err.message);
+		},
+	});
+
+	const onSubmit = async (data: MedsFormData): Promise<void> => {
+		setIsCounting(false);
+
+		const patientId: string = generateUniqueCode();
+
+		const payload: NewMedsPayload = {
+			...data,
+			patient_id: patientId,
+			participant_code: code ?? "",
+			task_id: "MEDS01",
+			click_count: clickCount,
+			error_count: errorCount,
+		};
+
+		recordMeds(payload);
+	};
+
+	const handleInputFocus = (): void => {
+		if (!isCounting) setIsCounting(true);
+	};
+
+	return (
+		<div className="bg-white p-4 rounded-xl grid gap-6">
+			<div>
+				<h2 className="font-poppins font-bold text-lg">
+					Add a medication
+				</h2>
+			</div>
+
+			<div className="grid gap-4">
+				<form
+					className="grid gap-4 items-start md:grid-cols-2 lg:grid-cols-3"
+					onSubmit={handleSubmit(onSubmit, onInvalid)}
+				>
+					<label className="grid gap-2">
+						<span className="font-poppins font-medium text-sm">
+							Drug Name (e.g., Atorvastatin)
+						</span>
+						<input
+							className="input md:py-2 rounded-lg"
+							type="text"
+							placeholder="Enter drug name"
+							{...register("drug_name")}
+							onFocus={handleInputFocus}
+						/>
+
+						{errors.drug_name && (
+							<p className="text-red text-sm">
+								{errors.drug_name.message}
+							</p>
+						)}
+					</label>
+
+					<label className="grid gap-2">
+						<span className="font-poppins font-medium text-sm">
+							Strength (e.g., 20 mg)
+						</span>
+						<input
+							className="input md:py-2 rounded-lg"
+							type="text"
+							placeholder="Enter drug dosage"
+							{...register("drug_strength")}
+							onFocus={handleInputFocus}
+						/>
+
+						{errors.drug_strength && (
+							<p className="text-red text-sm">
+								{errors.drug_strength.message}
+							</p>
+						)}
+					</label>
+
+					<label className="grid gap-2">
+						<span className="font-poppins font-medium text-sm">
+							Frequency (e.g., Nightly)
+						</span>
+						<input
+							className="input md:py-2 rounded-lg"
+							type="text"
+							placeholder="Enter drug use frequency"
+							{...register("frequency")}
+							onFocus={handleInputFocus}
+						/>
+						{errors.frequency && (
+							<p className="text-red text-sm">
+								{errors.frequency.message}
+							</p>
+						)}
+					</label>
+
+					{isError && (
+						<p className="text-red font-medium md:col-span-3">
+							{error?.message || "Something went wrong"}
+						</p>
+					)}
+
+					<div className="grid gap-4 md:grid-cols-2 md:col-span-3 mt-4">
+						<button
+							className="btn"
+							type="submit"
+							disabled={!isValid || isPending}
+						>
+							{isPending ? "Adding medication..." : "Submit"}
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	);
 };
 
 export default RecordMeds;

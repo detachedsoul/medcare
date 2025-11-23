@@ -25,6 +25,7 @@ interface Meds {
 	participant_code: string;
 	patient_id: string;
 	click_count: number;
+	error_count: number;
 	task_id: string;
 	drug_name: string;
 	drug_strength: string;
@@ -245,7 +246,9 @@ const MedsTable = () => {
 
 						<TableHead>Task ID</TableHead>
 
-						<TableHead>Number of Clicks</TableHead>
+                        <TableHead>Number of Clicks</TableHead>
+
+						<TableHead>Error Count</TableHead>
 
 						<TableHead>Date</TableHead>
 					</TableRow>
@@ -306,7 +309,9 @@ const MedsTable = () => {
 
 								<TableCell>{meds.task_id}</TableCell>
 
-								<TableCell>{meds.click_count}</TableCell>
+                                <TableCell>{meds.click_count}</TableCell>
+
+								<TableCell>{meds.error_count}</TableCell>
 
 								<TableCell>
 									{formatDate(new Date(meds.created_at))}

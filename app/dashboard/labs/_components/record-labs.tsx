@@ -55,6 +55,7 @@ interface Labs {
 	participant_code: string;
 	patient_id: string;
 	click_count: number;
+	error_count: number;
 	date: string;
 	location: string;
 	test_name: string;
@@ -74,6 +75,7 @@ interface NewLabsPayload {
 	patient_id: string;
 	participant_code: string;
 	click_count: number;
+	error_count: number;
 	date: string;
 	location: string;
 	test_name: string;
@@ -100,12 +102,18 @@ const RecordLabs = () => {
 	const { code } = useClinicianCode();
 
 	const [clickCount, setClickCount] = useState<number>(0);
+	const [errorCount, setErrorCount] = useState<number>(0);
 	const [isCounting, setIsCounting] = useState<boolean>(false);
 	const [location, setLocation] = useState("");
 	const [open, setOpen] = React.useState(false);
 	const [testName, setTestName] = React.useState("");
+	const previousErrorsRef = useRef<string[]>([]);
 
-	const clickHandlerRef = useRef<(e: MouseEvent) => void>(() => {});
+    const clickHandlerRef = useRef<(e: MouseEvent) => void>(() => { });
+
+    const firstRunRef = useRef(true);
+
+    const prevErrorsRef = useRef<Set<string>>(new Set());
 
 	const {
 		register,
@@ -113,8 +121,40 @@ const RecordLabs = () => {
 		reset,
 		formState: { errors, isValid },
 	} = useForm<LabsFormData>({
-		resolver: zodResolver(labsSchema),
-		mode: "onChange",
+		resolver: async (data, context, options) => {
+			const result = await zodResolver(labsSchema)(
+				data,
+				context,
+				options,
+			);
+
+			if (firstRunRef.current) {
+				firstRunRef.current = false;
+
+				return result;
+			}
+
+			const currentErrorMessages = Object.values(result.errors)
+				.map((err) => err?.message)
+				.filter(Boolean) as string[];
+
+			currentErrorMessages.forEach((msg) => {
+				if (!prevErrorsRef.current.has(msg)) {
+					prevErrorsRef.current.add(msg);
+					setErrorCount((prev) => prev + 1); // Increment only for new errors
+				}
+			});
+
+			// Remove resolved errors from the set
+			prevErrorsRef.current.forEach((msg) => {
+				if (!currentErrorMessages.includes(msg)) {
+					prevErrorsRef.current.delete(msg);
+				}
+			});
+
+			return result;
+		},
+		mode: "all",
 	});
 
 	useEffect(() => {
@@ -153,6 +193,7 @@ const RecordLabs = () => {
               <h2>Form Submission Failed</h2>
               <p>The following validation errors occurred:</p>
               <p>${errorList}</p>
+              <p><strong>Total Error Count:</strong> ${errorCount}</p>
             `,
 					},
 				}),
@@ -281,6 +322,10 @@ const RecordLabs = () => {
                                 <th>Click Count</th>
                                 <td>${newRecord?.click_count}</td>
                             </tr>
+                            <tr>
+                                <th>Error Count</th>
+                                <td>${newRecord?.error_count}</td>
+                            </tr>
                         </table>
 
                         <p style="margin-top: 24px;">Keep up the great work! 🎉</p>
@@ -301,20 +346,21 @@ const RecordLabs = () => {
 
 			reset();
 			setClickCount(0);
+			setErrorCount(0);
+			previousErrorsRef.current = [];
 			setIsCounting(false);
 			setTestName("");
 			setLocation("");
 		},
 		onError: (err: any) => {
+			setErrorCount((prev) => prev + 1);
 			errorToast(err.message);
 		},
 	});
 
 	const onSubmit = async (data: LabsFormData): Promise<void> => {
-		// stop counting before submitting
 		setIsCounting(false);
 
-		// generate patient id
 		const patientId: string = generateUniqueCode();
 
 		const payload: NewLabsPayload = {
@@ -325,6 +371,7 @@ const RecordLabs = () => {
 			location: location,
 			test_name: testName,
 			click_count: clickCount,
+			error_count: errorCount,
 		};
 
 		recordLabs(payload);
