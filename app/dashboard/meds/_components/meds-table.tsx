@@ -23,9 +23,8 @@ import { formatDate } from "@/lib/format-date";
 interface Meds {
 	id: string;
 	participant_code: string;
-	patient_name: string;
+	patient_id: string;
 	click_count: number;
-	duration: number;
 	task_id: string;
 	drug_name: string;
 	drug_strength: string;
@@ -104,14 +103,13 @@ const MedsTable = () => {
 		const formatted = exportData.map((row) => ({
 			"ID": row.id,
 			"Participant Code": row.participant_code,
-			"Patient Name": row.patient_name,
+			"Patient ID": row.patient_id,
 			"Drug Name": row.drug_name,
 			"Drug Quantity": row.drug_strength,
 			"Frequency": row.frequency,
 			"Status": row.is_active ? "Active" : "Inactive",
 			"Task ID": row.task_id,
 			"Number of Clicks": row.click_count,
-			"Duration": row.duration,
 		}));
 
         const worksheet = XLSX.utils.json_to_sheet(formatted);
@@ -235,7 +233,7 @@ const MedsTable = () => {
 
 						<TableHead>Participant Code</TableHead>
 
-						<TableHead>Patient Name</TableHead>
+						<TableHead>Patient ID</TableHead>
 
 						<TableHead>Drug Name</TableHead>
 
@@ -248,8 +246,6 @@ const MedsTable = () => {
 						<TableHead>Task ID</TableHead>
 
 						<TableHead>Number of Clicks</TableHead>
-
-						<TableHead>Duration</TableHead>
 
 						<TableHead>Date</TableHead>
 					</TableRow>
@@ -284,7 +280,7 @@ const MedsTable = () => {
 									{meds.participant_code}
 								</TableCell>
 
-								<TableCell>{meds.patient_name}</TableCell>
+								<TableCell>{meds.patient_id}</TableCell>
 
 								<TableCell>{meds.drug_name}</TableCell>
 
@@ -311,8 +307,6 @@ const MedsTable = () => {
 								<TableCell>{meds.task_id}</TableCell>
 
 								<TableCell>{meds.click_count}</TableCell>
-
-								<TableCell>{meds.duration}</TableCell>
 
 								<TableCell>
 									{formatDate(new Date(meds.created_at))}

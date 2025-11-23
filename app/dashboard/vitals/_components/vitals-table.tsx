@@ -22,13 +22,12 @@ import { formatDate } from "@/lib/format-date";
 interface Vitals {
 	id: string;
 	staff_id: string;
-	patient_name: string;
+	patient_id: string;
 	blood_pressure: string;
 	heart_rate: number;
 	temperature: string;
 	weight: string;
 	task_id: string;
-	duration: number;
 	click_count: number;
 	created_at: number;
 }
@@ -105,14 +104,13 @@ const VitalsTable = () => {
 		const formatted = exportData.map((row) => ({
 			"ID": row.id,
 			"Participant Code": row.staff_id,
-			"Patient Name": row.patient_name,
+			"Patient ID": row.patient_id,
 			"Blood Pressure": row.blood_pressure,
 			"Heart Rate": row.heart_rate,
 			"Temperature": `${row.temperature} °C`,
 			"Weight": `${row.weight}kg`,
 			"Task ID": row.task_id,
 			"Number of Clicks": row.click_count,
-			"Duration": row.duration,
 		}));
 
 		const worksheet = XLSX.utils.json_to_sheet(formatted);
@@ -237,7 +235,7 @@ const VitalsTable = () => {
 
                         <TableHead>Participant Code</TableHead>
 
-						<TableHead>Patient Name</TableHead>
+						<TableHead>Patient ID</TableHead>
 
 						<TableHead>Task ID</TableHead>
 
@@ -250,8 +248,6 @@ const VitalsTable = () => {
 						<TableHead>Weight</TableHead>
 
 						<TableHead>Number of Clicks</TableHead>
-
-						<TableHead>Duration</TableHead>
 
 						<TableHead>Date</TableHead>
 					</TableRow>
@@ -287,7 +283,7 @@ const VitalsTable = () => {
 								</TableCell>
 
 								<TableCell className="font-medium">
-									{vitals.patient_name}
+									{vitals.patient_id}
 								</TableCell>
 
 								<TableCell>{vitals.task_id}</TableCell>
@@ -301,8 +297,6 @@ const VitalsTable = () => {
 								<TableCell>{vitals.weight}kg</TableCell>
 
 								<TableCell>{vitals.click_count}</TableCell>
-
-								<TableCell>{vitals.duration}</TableCell>
 
 								<TableCell>
 									{formatDate(new Date(vitals.created_at))}
