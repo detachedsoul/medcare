@@ -23,6 +23,9 @@ interface Labs {
 	id: string;
 	participant_code: string;
 	patient_id: string;
+	first_name: string;
+	last_name: string;
+	age: string;
 	click_count: number;
 	error_count: number;
 	date: string;
@@ -58,7 +61,6 @@ const LabsTable = () => {
 		],
 		onSuccess: () => {
 			successToast("Record(s) deleted successfully.");
-
 			setSelected([]);
 		},
 	});
@@ -66,20 +68,19 @@ const LabsTable = () => {
 	const toggleSelectAll = (checked: boolean) => {
 		if (!data) {
 			setSelected([]);
-
 			return;
 		}
 
 		if (checked) {
-			setSelected(data.map((Labs) => Labs.id));
+			setSelected(data.map((labs) => labs.id));
 		} else {
 			setSelected([]);
 		}
 	};
 
-	const toggleSelect = (LabsId: string, checked: boolean) => {
+	const toggleSelect = (labsId: string, checked: boolean) => {
 		setSelected((prev) =>
-			checked ? [...prev, LabsId] : prev.filter((id) => id !== LabsId),
+			checked ? [...prev, labsId] : prev.filter((id) => id !== labsId),
 		);
 	};
 
@@ -90,7 +91,6 @@ const LabsTable = () => {
 	const handleExport = () => {
 		if (!data || data.length === 0) {
 			errorToast("No records available to export.");
-
 			return;
 		}
 
@@ -103,6 +103,9 @@ const LabsTable = () => {
 			"ID": row.id,
 			"Participant Code": row.participant_code,
 			"Patient ID": row.patient_id,
+			"First Name": row.first_name,
+			"Last Name": row.last_name,
+			"Age": row.age,
 			"Test Name": row.test_name,
 			"Location": row.location,
 			"Task ID": row.task_id,
@@ -117,10 +120,6 @@ const LabsTable = () => {
 		XLSX.utils.sheet_add_json(worksheet, formatted, {
 			origin: "A2",
 			skipHeader: false,
-		});
-
-		XLSX.utils.sheet_add_aoa(worksheet, [["Labs Records Export"]], {
-			origin: "A1",
 		});
 
 		const columnCount = Object.keys(formatted[0]).length;
@@ -175,7 +174,7 @@ const LabsTable = () => {
 		return <Loading />;
 	}
 
-	if (data && data?.length < 1) {
+	if (data && data.length < 1) {
 		return (
 			<div className="h-[50dvh] grid place-content-center text-center bg-white p-4 rounded-xl">
 				<p className="text-red font-medium">
@@ -216,7 +215,6 @@ const LabsTable = () => {
 				</p>
 			)}
 
-			{/* Table */}
 			<Table>
 				<TableHeader>
 					<TableRow>
@@ -228,21 +226,16 @@ const LabsTable = () => {
 								}
 							/>
 						</TableHead>
-
 						<TableHead>Participant Code</TableHead>
-
 						<TableHead>Patient ID</TableHead>
-
+						<TableHead>First Name</TableHead>
+						<TableHead>Last Name</TableHead>
+						<TableHead>Age</TableHead>
 						<TableHead>Test Name</TableHead>
-
 						<TableHead>Location</TableHead>
-
 						<TableHead>Task ID</TableHead>
-
-                        <TableHead>Number of Clicks</TableHead>
-
+						<TableHead>Number of Clicks</TableHead>
 						<TableHead>Error Count</TableHead>
-
 						<TableHead>Date</TableHead>
 					</TableRow>
 				</TableHeader>
@@ -275,19 +268,15 @@ const LabsTable = () => {
 								<TableCell className="font-medium">
 									{orderLabs.participant_code}
 								</TableCell>
-
 								<TableCell>{orderLabs.patient_id}</TableCell>
-
+								<TableCell>{orderLabs.first_name}</TableCell>
+								<TableCell>{orderLabs.last_name}</TableCell>
+								<TableCell>{orderLabs.age}</TableCell>
 								<TableCell>{orderLabs.test_name}</TableCell>
-
 								<TableCell>{orderLabs.location}</TableCell>
-
 								<TableCell>{orderLabs.task_id}</TableCell>
-
 								<TableCell>{orderLabs.click_count}</TableCell>
-
 								<TableCell>{orderLabs.error_count}</TableCell>
-
 								<TableCell>
 									{formatDate(new Date(orderLabs.created_at))}
 								</TableCell>

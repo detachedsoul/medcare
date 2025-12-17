@@ -25,6 +25,9 @@ interface Vitals {
 	patient_id: string;
 	blood_pressure: string;
 	heart_rate: number;
+	first_name: string;
+	last_name: string;
+	age: string;
 	temperature: string;
 	weight: string;
 	task_id: string;
@@ -106,6 +109,9 @@ const VitalsTable = () => {
 			"ID": row.id,
 			"Participant Code": row.staff_id,
 			"Patient ID": row.patient_id,
+			"First Name": row.first_name,
+			"Last Name": row.last_name,
+			"Age": row.age,
 			"Blood Pressure": row.blood_pressure,
 			"Heart Rate": row.heart_rate,
 			"Temperature": `${row.temperature} °C`,
@@ -234,9 +240,13 @@ const VitalsTable = () => {
 							/>
 						</TableHead>
 
-                        <TableHead>Participant Code</TableHead>
+						<TableHead>Participant Code</TableHead>
 
 						<TableHead>Patient ID</TableHead>
+
+						<TableHead>First Name</TableHead>
+						<TableHead>Last Name</TableHead>
+						<TableHead>Age</TableHead>
 
 						<TableHead>Task ID</TableHead>
 
@@ -248,7 +258,7 @@ const VitalsTable = () => {
 
 						<TableHead>Weight</TableHead>
 
-                        <TableHead>Number of Clicks</TableHead>
+						<TableHead>Number of Clicks</TableHead>
 
 						<TableHead>Error Count</TableHead>
 
@@ -289,6 +299,10 @@ const VitalsTable = () => {
 									{vitals.patient_id}
 								</TableCell>
 
+								<TableCell>{vitals.first_name}</TableCell>
+								<TableCell>{vitals.last_name}</TableCell>
+								<TableCell>{vitals.age}</TableCell>
+
 								<TableCell>{vitals.task_id}</TableCell>
 
 								<TableCell>{vitals.blood_pressure}</TableCell>
@@ -299,7 +313,7 @@ const VitalsTable = () => {
 
 								<TableCell>{vitals.weight}kg</TableCell>
 
-                                <TableCell>{vitals.click_count}</TableCell>
+								<TableCell>{vitals.click_count}</TableCell>
 
 								<TableCell>{vitals.error_count}</TableCell>
 

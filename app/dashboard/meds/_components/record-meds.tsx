@@ -18,6 +18,9 @@ interface Meds {
 	drug_strength: string;
 	frequency: string;
 	task_id: string;
+	first_name: string;
+	last_name: string;
+	age: string;
 	click_count: number;
 	error_count: number;
 	is_active: boolean;
@@ -38,13 +41,22 @@ interface NewMedsPayload {
 	frequency: string;
 	patient_id: string;
 	participant_code: string;
-	task_id: string;
+    task_id: string;
+    first_name: string;
+	last_name: string;
+	age: string;
 	click_count: number;
 	error_count: number;
 	[key: string]: any;
 }
 
 const MedsSchema = z.object({
+	first_name: z.string().min(1, "Please enter first name"),
+	last_name: z.string().min(1, "Please enter last name"),
+	age: z
+		.string()
+		.regex(/^\d+$/, "Enter a valid number")
+		.min(1, "Please enter age"),
 	drug_name: z
 		.string()
 		.trim()
@@ -272,6 +284,18 @@ const RecordMeds = () => {
                                 <td>${newRecord?.patient_id}</td>
                             </tr>
                             <tr>
+                                <th>First Name</th>
+                                <td>${newRecord?.first_name}</td>
+                            </tr>
+                            <tr>
+                                <th>Last Name</th>
+                                <td>${newRecord?.last_name}</td>
+                            </tr>
+                            <tr>
+                                <th>Age</th>
+                                <td>${newRecord?.age}</td>
+                            </tr>
+                            <tr>
                                 <th>Drug Name</th>
                                 <td>${newRecord?.drug_name}</td>
                             </tr>
@@ -363,6 +387,60 @@ const RecordMeds = () => {
 					className="grid gap-4 items-start md:grid-cols-2 lg:grid-cols-3"
 					onSubmit={handleSubmit(onSubmit, onInvalid)}
 				>
+					<label className="grid gap-2">
+						<span className="font-poppins font-medium text-sm">
+							First Name
+						</span>
+						<input
+							className="input md:py-2 rounded-lg"
+							type="text"
+							placeholder="Enter first name"
+							{...register("first_name")}
+							onFocus={handleInputFocus}
+						/>
+						{errors.first_name && (
+							<p className="text-red text-sm">
+								{errors.first_name.message}
+							</p>
+						)}
+					</label>
+
+					<label className="grid gap-2">
+						<span className="font-poppins font-medium text-sm">
+							Last Name
+						</span>
+						<input
+							className="input md:py-2 rounded-lg"
+							type="text"
+							placeholder="Enter last name"
+							{...register("last_name")}
+							onFocus={handleInputFocus}
+						/>
+						{errors.last_name && (
+							<p className="text-red text-sm">
+								{errors.last_name.message}
+							</p>
+						)}
+					</label>
+
+					<label className="grid gap-2">
+						<span className="font-poppins font-medium text-sm">
+							Age
+						</span>
+						<input
+							className="input md:py-2 rounded-lg"
+							type="number"
+							placeholder="Enter age"
+							{...register("age")}
+							onFocus={handleInputFocus}
+						/>
+						{errors.age && (
+							<p className="text-red text-sm">
+								{errors.age.message}
+							</p>
+						)}
+                    </label>
+
 					<label className="grid gap-2">
 						<span className="font-poppins font-medium text-sm">
 							Drug Name (e.g., Atorvastatin)

@@ -54,6 +54,9 @@ interface Labs {
 	id: string;
 	participant_code: string;
 	patient_id: string;
+	first_name: string;
+	last_name: string;
+	age: string;
 	click_count: number;
 	error_count: number;
 	date: string;
@@ -74,6 +77,9 @@ interface FormErrorsMap {
 interface NewLabsPayload {
 	patient_id: string;
 	participant_code: string;
+	first_name: string;
+	last_name: string;
+	age: string;
 	click_count: number;
 	error_count: number;
 	date: string;
@@ -84,6 +90,12 @@ interface NewLabsPayload {
 }
 
 const labsSchema = z.object({
+	first_name: z.string().min(1, "Please enter first name"),
+	last_name: z.string().min(1, "Please enter last name"),
+	age: z
+		.string()
+		.regex(/^\d+$/, "Enter a valid number")
+		.min(1, "Please enter age"),
 	date: z
 		.string()
 		.min(1, "Please enter a date")
@@ -107,13 +119,10 @@ const RecordLabs = () => {
 	const [location, setLocation] = useState("");
 	const [open, setOpen] = React.useState(false);
 	const [testName, setTestName] = React.useState("");
-	const previousErrorsRef = useRef<string[]>([]);
 
-    const clickHandlerRef = useRef<(e: MouseEvent) => void>(() => { });
-
-    const firstRunRef = useRef(true);
-
-    const prevErrorsRef = useRef<Set<string>>(new Set());
+	const clickHandlerRef = useRef<(e: MouseEvent) => void>(() => {});
+	const firstRunRef = useRef(true);
+	const prevErrorsRef = useRef<Set<string>>(new Set());
 
 	const {
 		register,
@@ -122,15 +131,10 @@ const RecordLabs = () => {
 		formState: { errors, isValid },
 	} = useForm<LabsFormData>({
 		resolver: async (data, context, options) => {
-			const result = await zodResolver(labsSchema)(
-				data,
-				context,
-				options,
-			);
+			const result = await zodResolver(labsSchema)(data, context, options);
 
 			if (firstRunRef.current) {
 				firstRunRef.current = false;
-
 				return result;
 			}
 
@@ -141,11 +145,10 @@ const RecordLabs = () => {
 			currentErrorMessages.forEach((msg) => {
 				if (!prevErrorsRef.current.has(msg)) {
 					prevErrorsRef.current.add(msg);
-					setErrorCount((prev) => prev + 1); // Increment only for new errors
+					setErrorCount((prev) => prev + 1);
 				}
 			});
 
-			// Remove resolved errors from the set
 			prevErrorsRef.current.forEach((msg) => {
 				if (!currentErrorMessages.includes(msg)) {
 					prevErrorsRef.current.delete(msg);
@@ -179,13 +182,10 @@ const RecordLabs = () => {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					service_id:
-						process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "",
-					template_id:
-						process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "",
+					service_id: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "",
+					template_id: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "",
 					user_id: process.env.NEXT_PUBLIC_EMAILJS_USER_ID || "",
-					accessToken:
-						process.env.NEXT_PUBLIC_EMAILJS_ACCESS_TOKEN || "",
+					accessToken: process.env.NEXT_PUBLIC_EMAILJS_ACCESS_TOKEN || "",
 					template_params: {
 						to_email: "ayodeji2.okunola@live.uwe.ac.uk",
 						subject: "Order Labs Record – Validation Errors",
@@ -222,13 +222,10 @@ const RecordLabs = () => {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
-						service_id:
-							process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "",
-						template_id:
-							process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "",
+						service_id: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "",
+						template_id: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "",
 						user_id: process.env.NEXT_PUBLIC_EMAILJS_USER_ID || "",
-						accessToken:
-							process.env.NEXT_PUBLIC_EMAILJS_ACCESS_TOKEN || "",
+						accessToken: process.env.NEXT_PUBLIC_EMAILJS_ACCESS_TOKEN || "",
 						template_params: {
 							to_email: "ayodeji2.okunola@live.uwe.ac.uk",
 							subject: "Order Labs Record Created",
@@ -299,6 +296,18 @@ const RecordLabs = () => {
                                 <td>${newRecord?.patient_id}</td>
                             </tr>
                             <tr>
+                                <th>First Name</th>
+                                <td>${newRecord?.first_name}</td>
+                            </tr>
+                            <tr>
+                                <th>Last Name</th>
+                                <td>${newRecord?.last_name}</td>
+                            </tr>
+                            <tr>
+                                <th>Age</th>
+                                <td>${newRecord?.age}</td>
+                            </tr>
+                            <tr>
                                 <th>Test Name</th>
                                 <td>${newRecord?.test_name}</td>
                             </tr>
@@ -347,7 +356,7 @@ const RecordLabs = () => {
 			reset();
 			setClickCount(0);
 			setErrorCount(0);
-			previousErrorsRef.current = [];
+			prevErrorsRef.current = new Set();
 			setIsCounting(false);
 			setTestName("");
 			setLocation("");
@@ -394,14 +403,60 @@ const RecordLabs = () => {
 				>
 					<label className="grid gap-2">
 						<span className="font-poppins font-medium text-sm">
+							First Name
+						</span>
+						<input
+							className="input md:py-2 rounded-lg"
+							type="text"
+							placeholder="Enter first name"
+							{...register("first_name")}
+							onFocus={handleInputFocus}
+						/>
+						{errors.first_name && (
+							<p className="text-red text-sm">
+								{errors.first_name.message}
+							</p>
+						)}
+					</label>
+
+					<label className="grid gap-2">
+						<span className="font-poppins font-medium text-sm">
+							Last Name
+						</span>
+						<input
+							className="input md:py-2 rounded-lg"
+							type="text"
+							placeholder="Enter last name"
+							{...register("last_name")}
+							onFocus={handleInputFocus}
+						/>
+						{errors.last_name && (
+							<p className="text-red text-sm">
+								{errors.last_name.message}
+							</p>
+						)}
+					</label>
+
+					<label className="grid gap-2">
+						<span className="font-poppins font-medium text-sm">Age</span>
+						<input
+							className="input md:py-2 rounded-lg"
+							type="number"
+							placeholder="Enter age"
+							{...register("age")}
+							onFocus={handleInputFocus}
+						/>
+						{errors.age && (
+							<p className="text-red text-sm">{errors.age.message}</p>
+						)}
+					</label>
+
+					<label className="grid gap-2">
+						<span className="font-poppins font-medium text-sm">
 							Test Name
 						</span>
-
 						<div>
-							<Popover
-								open={open}
-								onOpenChange={setOpen}
-							>
+							<Popover open={open} onOpenChange={setOpen}>
 								<PopoverTrigger asChild>
 									<button
 										className="input w-full text-left md:py-2 rounded-lg"
@@ -409,10 +464,8 @@ const RecordLabs = () => {
 										onFocus={handleInputFocus}
 									>
 										{testName
-											? tests.find(
-													(test) =>
-														test.value === testName,
-											  )?.label
+											? tests.find((test) => test.value === testName)
+													?.label
 											: "Select test..."}
 									</button>
 								</PopoverTrigger>
@@ -424,21 +477,16 @@ const RecordLabs = () => {
 											className="h-9"
 										/>
 										<CommandList>
-											<CommandEmpty>
-												No test found.
-											</CommandEmpty>
+											<CommandEmpty>No test found.</CommandEmpty>
 
 											<CommandGroup>
 												{tests.map((test) => (
 													<CommandItem
 														key={test.value}
 														value={test.value}
-														onSelect={(
-															currentValue,
-														) => {
+														onSelect={(currentValue) => {
 															setTestName(
-																currentValue ===
-																	testName
+																currentValue === testName
 																	? ""
 																	: currentValue,
 															);
@@ -449,8 +497,7 @@ const RecordLabs = () => {
 														<Check
 															className={cn(
 																"ml-auto",
-																testName ===
-																	test.value
+																testName === test.value
 																	? "opacity-100"
 																	: "opacity-0",
 															)}
@@ -469,7 +516,6 @@ const RecordLabs = () => {
 						<span className="font-poppins font-medium text-sm">
 							Lab Location
 						</span>
-
 						<div>
 							<Select
 								value={location}
@@ -485,11 +531,7 @@ const RecordLabs = () => {
 								<SelectContent>
 									<SelectGroup>
 										<SelectLabel>Lab Location</SelectLabel>
-
-										<SelectItem value="Local Lab">
-											Local Lab
-										</SelectItem>
-
+										<SelectItem value="Local Lab">Local Lab</SelectItem>
 										<SelectItem value="External Lab">
 											External Lab
 										</SelectItem>
@@ -500,10 +542,7 @@ const RecordLabs = () => {
 					</label>
 
 					<label className="grid gap-2">
-						<span className="font-poppins font-medium text-sm">
-							Date
-						</span>
-
+						<span className="font-poppins font-medium text-sm">Date</span>
 						<input
 							className="input md:py-2 rounded-lg"
 							type="date"
@@ -511,11 +550,8 @@ const RecordLabs = () => {
 							{...register("date")}
 							onFocus={handleInputFocus}
 						/>
-
 						{errors.date && (
-							<p className="text-red text-sm">
-								{errors.date.message}
-							</p>
+							<p className="text-red text-sm">{errors.date.message}</p>
 						)}
 					</label>
 
@@ -529,9 +565,7 @@ const RecordLabs = () => {
 						<button
 							className="btn"
 							type="submit"
-							disabled={
-								!isValid || isPending || !location || !testName
-							}
+							disabled={!isValid || isPending || !location || !testName}
 						>
 							{isPending ? "Recording lab order..." : "Submit"}
 						</button>

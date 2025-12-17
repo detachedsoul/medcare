@@ -28,6 +28,9 @@ interface Meds {
 	error_count: number;
 	task_id: string;
 	drug_name: string;
+	first_name: string;
+	last_name: string;
+	age: string;
 	drug_strength: string;
 	frequency: string;
 	is_active: boolean;
@@ -105,6 +108,9 @@ const MedsTable = () => {
 			"ID": row.id,
 			"Participant Code": row.participant_code,
 			"Patient ID": row.patient_id,
+			"First Name": row.first_name,
+			"Last Name": row.last_name,
+			"Age": row.age,
 			"Drug Name": row.drug_name,
 			"Drug Quantity": row.drug_strength,
 			"Frequency": row.frequency,
@@ -236,6 +242,10 @@ const MedsTable = () => {
 
 						<TableHead>Patient ID</TableHead>
 
+                        <TableHead>First Name</TableHead>
+						<TableHead>Last Name</TableHead>
+						<TableHead>Age</TableHead>
+
 						<TableHead>Drug Name</TableHead>
 
 						<TableHead>Drug Quantity</TableHead>
@@ -285,6 +295,10 @@ const MedsTable = () => {
 
 								<TableCell>{meds.patient_id}</TableCell>
 
+								<TableCell>{meds.first_name}</TableCell>
+								<TableCell>{meds.last_name}</TableCell>
+								<TableCell>{meds.age}</TableCell>
+
 								<TableCell>{meds.drug_name}</TableCell>
 
 								<TableCell>{meds.drug_strength}</TableCell>
@@ -309,7 +323,7 @@ const MedsTable = () => {
 
 								<TableCell>{meds.task_id}</TableCell>
 
-                                <TableCell>{meds.click_count}</TableCell>
+								<TableCell>{meds.click_count}</TableCell>
 
 								<TableCell>{meds.error_count}</TableCell>
 
