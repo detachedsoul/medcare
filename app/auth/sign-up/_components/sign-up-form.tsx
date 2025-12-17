@@ -103,7 +103,7 @@ const SignUpForm = () => {
 					className="grid gap-2"
 					htmlFor="first_name"
 				>
-					<span className="font-medium">Enter Your First Name</span>
+					<span className="font-medium font-poppins">Enter Your First Name</span>
 
 					<input
 						className="input"
@@ -123,7 +123,7 @@ const SignUpForm = () => {
 					className="grid gap-2"
 					htmlFor="last_name"
 				>
-					<span className="font-medium">Enter Your Last Name</span>
+					<span className="font-medium font-poppins">Enter Your Last Name</span>
 
 					<input
 						className="input"
@@ -143,7 +143,7 @@ const SignUpForm = () => {
 					className="grid gap-2"
 					htmlFor="email"
 				>
-					<span className="font-medium">Enter Your Email</span>
+					<span className="font-medium font-poppins">Enter Your Email</span>
 
 					<input
 						className="input"
@@ -164,7 +164,7 @@ const SignUpForm = () => {
 					className="grid gap-2"
 					htmlFor="password"
 				>
-					<span className="font-medium">Enter Your Password</span>
+					<span className="font-medium font-poppins">Enter Your Password</span>
 
 					<input
 						className="input"
