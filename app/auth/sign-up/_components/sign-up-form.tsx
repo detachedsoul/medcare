@@ -1,117 +1,204 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useSupabaseMutation } from "@/hooks/use-mutation";
 import { generateUniqueCode } from "@/lib/generate-unique-code";
 import { errorToast, successToast } from "@/lib/toast";
-import { useRouter } from "next/navigation";
 
-interface Clinician {
+interface User {
 	id: string;
-	staff_id: string;
-	staff_name?: string | null;
+	participant_code: string;
+	first_name: string;
+	last_name: string;
+	email: string;
+	password: string;
 }
+
+const signUpSchema = z.object({
+	first_name: z.string().min(1, "First name is required"),
+	last_name: z.string().min(1, "Last name is required"),
+	email: z.email("Invalid email address"),
+	password: z.string().min(5, "Password must be at least 6 characters"),
+});
+
+type FormValues = z.infer<typeof signUpSchema>;
 
 const SignUpForm = () => {
 	const { replace } = useRouter();
 
-	const [name, setName] = useState("");
-	const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+	const {
+		register,
+		handleSubmit,
+        reset,
+		formState: { errors, isSubmitting, isValid },
+	} = useForm<FormValues>({
+		resolver: zodResolver(signUpSchema),
+        mode: "all",
+        defaultValues: {
+            first_name: "",
+            last_name: "",
+            email: "",
+            password: "",
+        },
+	});
 
 	const {
-		mutate: addClinician,
+		mutate: addUser,
 		isPending,
 		isError,
 		error,
-	} = useSupabaseMutation<Clinician>({
-		table: "clinician",
+	} = useSupabaseMutation<User>({
+		table: "user",
 		type: "insert",
-		invalidateKey: ["clinician"],
-        onSuccess: (data) => {
-            const code = data?.[0].staff_id;
+		invalidateKey: ["user"],
+		onSuccess: (data) => {
+			const participantId = data?.[0]?.participant_code;
 
-			if (code) localStorage.setItem("clinician_code", code);
+			if (participantId) {
+				localStorage.setItem("clinician_code", participantId);
+			}
 
 			successToast("Account created successfully.");
-
+            reset();
 			replace("/dashboard");
 		},
 		onError: (error) => {
+            if (error.message.includes("duplicate")) {
+                errorToast("An account with this email already exists.");
+                return;
+            }
+
 			errorToast(error.message);
 		},
 	});
 
-	const handleSubmit = async () => {
-		setIsGeneratingCode(true);
+	const onSubmit = async (values: FormValues) => {
+		const participant_code = generateUniqueCode();
 
-		const generatedCode = await generateUniqueCode();
-
-		if (!generatedCode) {
-			errorToast("Staff ID is required");
-
-			setIsGeneratingCode(false);
-
+		if (!participant_code) {
+			errorToast("Participant ID is required");
 			return;
 		}
 
-		if (!generatedCode.trim()) {
-			errorToast("Staff ID is required");
-
-			setIsGeneratingCode(false);
-
-			return;
-		}
-
-		setIsGeneratingCode(false);
-
-		addClinician({
-			staff_id: generatedCode,
-			staff_name: name?.trim() || null,
+		addUser({
+			participant_code,
+			first_name: values.first_name.trim(),
+			last_name: values.last_name.trim(),
+			email: values.email.toLowerCase().trim(),
+			password: values.password,
 		});
 	};
 
 	return (
 		<div className="grid gap-4 w-full">
-			<form className="grid gap-6 p-4">
+			<form
+				className="grid gap-5 items-start p-4 md:grid-cols-2"
+				onSubmit={handleSubmit(onSubmit)}
+			>
 				<label
 					className="grid gap-2"
-					htmlFor="staff-name"
+					htmlFor="first_name"
 				>
-					<span className="text-left font-poppins">
-						Name (Optional)
-					</span>
+					<span className="font-medium">Enter Your First Name</span>
 
 					<input
 						className="input"
-						placeholder="Enter your name"
-						id="staff-name"
-						value={name}
-						onChange={(e) => setName(e.target.value)}
+						placeholder="First name"
+						{...register("first_name")}
+						id="first_name"
 					/>
+
+					{errors.first_name && (
+						<p className="text-red text-sm">
+							{errors.first_name.message}
+						</p>
+					)}
+				</label>
+
+				<label
+					className="grid gap-2"
+					htmlFor="last_name"
+				>
+					<span className="font-medium">Enter Your Last Name</span>
+
+					<input
+						className="input"
+						placeholder="Last name"
+						{...register("last_name")}
+						id="last_name"
+					/>
+
+					{errors.last_name && (
+						<p className="text-red text-sm">
+							{errors.last_name.message}
+						</p>
+					)}
+				</label>
+
+				<label
+					className="grid gap-2"
+					htmlFor="email"
+				>
+					<span className="font-medium">Enter Your Email</span>
+
+					<input
+						className="input"
+						type="email"
+						placeholder="Email"
+						{...register("email")}
+						id="email"
+					/>
+
+					{errors.email && (
+						<p className="text-red text-sm">
+							{errors.email.message}
+						</p>
+					)}
+				</label>
+
+				<label
+					className="grid gap-2"
+					htmlFor="password"
+				>
+					<span className="font-medium">Enter Your Password</span>
+
+					<input
+						className="input"
+						type="password"
+						placeholder="Password"
+						{...register("password")}
+						id="password"
+					/>
+
+					{errors.password && (
+						<p className="text-red text-sm">
+							{errors.password.message}
+						</p>
+					)}
 				</label>
 
 				<button
-					className="btn"
-					type="button"
-					disabled={isPending || isGeneratingCode}
-					onClick={handleSubmit}
+					className="btn md:col-span-2"
+					type="submit"
+					disabled={isPending || isSubmitting || !isValid}
 				>
-					{isPending || isGeneratingCode
-						? "Signing Up..."
-						: "Sign Up"}
+					{isPending || isSubmitting ? "Signing Up..." : "Sign Up"}
 				</button>
 
 				{isError && (
-					<p className="text-red font-medium">
-					    {error?.message || "Something went wrong"}
+					<p className="text-red font-medium md:col-span-2">
+						{error?.message || "Something went wrong"}
 					</p>
 				)}
 
-				<p>
+				<p className="md:col-span-2 text-center">
 					Already have an account?{" "}
 					<Link
-						className="text-blue hover:underline hover:decoration-blue hover:decoration-double underline-offset-5 font-medium"
+						className="text-blue hover:underline underline-offset-4 font-medium"
 						href="/auth/sign-in"
 					>
 						Sign in instead
