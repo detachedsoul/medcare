@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import PatientSelect from "@/components/patient-select";
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -9,6 +10,7 @@ import { useSupabaseMutation } from "@/hooks/use-mutation";
 import { errorToast, successToast } from "@/lib/toast";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
 import { generateUniqueCode } from "@/lib/generate-unique-code";
+import { Patient, patients } from "@/lib/patients";
 
 interface Meds {
 	id: string;
@@ -90,6 +92,8 @@ type MedsFormData = z.infer<typeof MedsSchema>;
 const RecordMeds = () => {
 	const { code } = useClinicianCode();
 
+    const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+
     const firstRunRef = useRef(true);
 
     const prevErrorsRef = useRef<Set<string>>(new Set());
@@ -135,6 +139,17 @@ const RecordMeds = () => {
 		},
 		mode: "all",
 	});
+
+    const handlePatientSelect = (patient: Patient) => {
+		setSelectedPatient(patient);
+
+		reset((prev) => ({
+			...prev,
+			first_name: patient.first_name,
+			last_name: patient.last_name,
+			age: patient.age,
+		}));
+	};
 
 	const [clickCount, setClickCount] = useState<number>(0);
 	const [errorCount, setErrorCount] = useState<number>(0);
@@ -345,7 +360,8 @@ const RecordMeds = () => {
 			setClickCount(0);
 			setErrorCount(0);
 			allErrorsRef.current.clear();
-			setIsCounting(false);
+            setIsCounting(false);
+            setSelectedPatient(null);
 		},
 		onError: (err: any) => {
 			setErrorCount((prev) => prev + 1);
@@ -389,57 +405,17 @@ const RecordMeds = () => {
 				>
 					<label className="grid gap-2">
 						<span className="font-poppins font-medium text-sm">
-							First Name
+							Patient
 						</span>
-						<input
-							className="input md:py-2 rounded-lg"
-							type="text"
-							placeholder="Enter first name"
-							{...register("first_name")}
-							onFocus={handleInputFocus}
-						/>
-						{errors.first_name && (
-							<p className="text-red text-sm">
-								{errors.first_name.message}
-							</p>
-						)}
-					</label>
 
-					<label className="grid gap-2">
-						<span className="font-poppins font-medium text-sm">
-							Last Name
-						</span>
-						<input
-							className="input md:py-2 rounded-lg"
-							type="text"
-							placeholder="Enter last name"
-							{...register("last_name")}
-							onFocus={handleInputFocus}
-						/>
-						{errors.last_name && (
-							<p className="text-red text-sm">
-								{errors.last_name.message}
-							</p>
-						)}
+                        <div>
+                            <PatientSelect
+                                patients={patients}
+                                value={selectedPatient}
+                                onSelect={handlePatientSelect}
+                            />
+                        </div>
 					</label>
-
-					<label className="grid gap-2">
-						<span className="font-poppins font-medium text-sm">
-							Age
-						</span>
-						<input
-							className="input md:py-2 rounded-lg"
-							type="number"
-							placeholder="Enter age"
-							{...register("age")}
-							onFocus={handleInputFocus}
-						/>
-						{errors.age && (
-							<p className="text-red text-sm">
-								{errors.age.message}
-							</p>
-						)}
-                    </label>
 
 					<label className="grid gap-2">
 						<span className="font-poppins font-medium text-sm">

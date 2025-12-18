@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import PatientSelect from "@/components/patient-select";
+import React from "react";
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -33,7 +35,7 @@ import {
 } from "@/components/ui/popover";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import React from "react";
+import { Patient, patients } from "@/lib/patients";
 
 const tests = [
 	{
@@ -113,6 +115,8 @@ type LabsFormData = z.infer<typeof labsSchema>;
 const RecordLabs = () => {
 	const { code } = useClinicianCode();
 
+    const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+
 	const [clickCount, setClickCount] = useState<number>(0);
 	const [errorCount, setErrorCount] = useState<number>(0);
 	const [isCounting, setIsCounting] = useState<boolean>(false);
@@ -159,6 +163,17 @@ const RecordLabs = () => {
 		},
 		mode: "all",
 	});
+
+    const handlePatientSelect = (patient: Patient) => {
+		setSelectedPatient(patient);
+
+		reset((prev) => ({
+			...prev,
+			first_name: patient.first_name,
+			last_name: patient.last_name,
+			age: patient.age,
+		}));
+	};
 
 	useEffect(() => {
 		clickHandlerRef.current = () => setClickCount((c) => c + 1);
@@ -360,6 +375,7 @@ const RecordLabs = () => {
 			setIsCounting(false);
 			setTestName("");
 			setLocation("");
+            setSelectedPatient(null);
 		},
 		onError: (err: any) => {
 			setErrorCount((prev) => prev + 1);
@@ -403,60 +419,28 @@ const RecordLabs = () => {
 				>
 					<label className="grid gap-2">
 						<span className="font-poppins font-medium text-sm">
-							First Name
+							Patient
 						</span>
-						<input
-							className="input md:py-2 rounded-lg"
-							type="text"
-							placeholder="Enter first name"
-							{...register("first_name")}
-							onFocus={handleInputFocus}
-						/>
-						{errors.first_name && (
-							<p className="text-red text-sm">
-								{errors.first_name.message}
-							</p>
-						)}
-					</label>
 
-					<label className="grid gap-2">
-						<span className="font-poppins font-medium text-sm">
-							Last Name
-						</span>
-						<input
-							className="input md:py-2 rounded-lg"
-							type="text"
-							placeholder="Enter last name"
-							{...register("last_name")}
-							onFocus={handleInputFocus}
-						/>
-						{errors.last_name && (
-							<p className="text-red text-sm">
-								{errors.last_name.message}
-							</p>
-						)}
-					</label>
-
-					<label className="grid gap-2">
-						<span className="font-poppins font-medium text-sm">Age</span>
-						<input
-							className="input md:py-2 rounded-lg"
-							type="number"
-							placeholder="Enter age"
-							{...register("age")}
-							onFocus={handleInputFocus}
-						/>
-						{errors.age && (
-							<p className="text-red text-sm">{errors.age.message}</p>
-						)}
+                        <div>
+                            <PatientSelect
+                                patients={patients}
+                                value={selectedPatient}
+                                onSelect={handlePatientSelect}
+                            />
+                        </div>
 					</label>
 
 					<label className="grid gap-2">
 						<span className="font-poppins font-medium text-sm">
 							Test Name
-						</span>
+                        </span>
+
 						<div>
-							<Popover open={open} onOpenChange={setOpen}>
+							<Popover
+								open={open}
+								onOpenChange={setOpen}
+							>
 								<PopoverTrigger asChild>
 									<button
 										className="input w-full text-left md:py-2 rounded-lg"
@@ -464,8 +448,10 @@ const RecordLabs = () => {
 										onFocus={handleInputFocus}
 									>
 										{testName
-											? tests.find((test) => test.value === testName)
-													?.label
+											? tests.find(
+													(test) =>
+														test.value === testName,
+											  )?.label
 											: "Select test..."}
 									</button>
 								</PopoverTrigger>
@@ -477,16 +463,21 @@ const RecordLabs = () => {
 											className="h-9"
 										/>
 										<CommandList>
-											<CommandEmpty>No test found.</CommandEmpty>
+											<CommandEmpty>
+												No test found.
+											</CommandEmpty>
 
 											<CommandGroup>
 												{tests.map((test) => (
 													<CommandItem
 														key={test.value}
 														value={test.value}
-														onSelect={(currentValue) => {
+														onSelect={(
+															currentValue,
+														) => {
 															setTestName(
-																currentValue === testName
+																currentValue ===
+																	testName
 																	? ""
 																	: currentValue,
 															);
@@ -497,7 +488,8 @@ const RecordLabs = () => {
 														<Check
 															className={cn(
 																"ml-auto",
-																testName === test.value
+																testName ===
+																	test.value
 																	? "opacity-100"
 																	: "opacity-0",
 															)}
@@ -531,7 +523,9 @@ const RecordLabs = () => {
 								<SelectContent>
 									<SelectGroup>
 										<SelectLabel>Lab Location</SelectLabel>
-										<SelectItem value="Local Lab">Local Lab</SelectItem>
+										<SelectItem value="Local Lab">
+											Local Lab
+										</SelectItem>
 										<SelectItem value="External Lab">
 											External Lab
 										</SelectItem>
@@ -542,7 +536,9 @@ const RecordLabs = () => {
 					</label>
 
 					<label className="grid gap-2">
-						<span className="font-poppins font-medium text-sm">Date</span>
+						<span className="font-poppins font-medium text-sm">
+							Date
+						</span>
 						<input
 							className="input md:py-2 rounded-lg"
 							type="date"
@@ -551,7 +547,9 @@ const RecordLabs = () => {
 							onFocus={handleInputFocus}
 						/>
 						{errors.date && (
-							<p className="text-red text-sm">{errors.date.message}</p>
+							<p className="text-red text-sm">
+								{errors.date.message}
+							</p>
 						)}
 					</label>
 
@@ -565,7 +563,9 @@ const RecordLabs = () => {
 						<button
 							className="btn"
 							type="submit"
-							disabled={!isValid || isPending || !location || !testName}
+							disabled={
+								!isValid || isPending || !location || !testName
+							}
 						>
 							{isPending ? "Recording lab order..." : "Submit"}
 						</button>
