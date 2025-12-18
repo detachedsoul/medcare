@@ -11,7 +11,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { TrashIcon, DownloadIcon } from "lucide-react";
 import { useQuery } from "@/hooks/use-query";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
@@ -40,6 +40,7 @@ const VitalsTable = () => {
 	const { code, isLoading } = useClinicianCode();
 
 	const [selected, setSelected] = useState<string[]>([]);
+	const [search, setSearch] = useState("");
 
 	const { data, error, isFetching } = useQuery<Vitals>({
 		table: "vitals",
@@ -47,6 +48,26 @@ const VitalsTable = () => {
 		enabled: !isLoading,
 		key: ["vitals"],
 	});
+
+	const filteredData = useMemo(() => {
+		if (!data) return [];
+		if (!search.trim()) return data;
+
+		const q = search.toLowerCase();
+
+		return data.filter((vitals) =>
+			[
+				vitals.staff_id,
+				vitals.patient_id,
+				vitals.first_name,
+				vitals.last_name,
+				vitals.task_id,
+			]
+				.join(" ")
+				.toLowerCase()
+				.includes(q),
+		);
+	}, [data, search]);
 
 	const {
 		mutate: deleteRecord,
@@ -62,48 +83,39 @@ const VitalsTable = () => {
 		],
 		onSuccess: () => {
 			successToast("Record(s) deleted successfully.");
-
 			setSelected([]);
-		}
+		},
 	});
 
 	const toggleSelectAll = (checked: boolean) => {
-		if (!data) {
+		if (!filteredData.length) {
 			setSelected([]);
-
 			return;
 		}
 
-		if (checked) {
-			setSelected(data.map((vitals) => vitals.id));
-		} else {
-			setSelected([]);
-		}
+		setSelected(checked ? filteredData.map((vitals) => vitals.id) : []);
 	};
 
-	const toggleSelect = (vitalsId: string, checked: boolean) => {
+	const toggleSelect = (id: string, checked: boolean) => {
 		setSelected((prev) =>
-			checked
-				? [...prev, vitalsId]
-				: prev.filter((id) => id !== vitalsId),
+			checked ? [...prev, id] : prev.filter((x) => x !== id),
 		);
 	};
 
-	const handleDelete = async () => {
+	const handleDelete = () => {
 		deleteRecord({});
 	};
 
 	const handleExport = () => {
-		if (!data || data.length === 0) {
+		if (!filteredData.length) {
 			errorToast("No records available to export.");
-
 			return;
 		}
 
 		const exportData =
 			selected.length > 0
-				? data.filter((row) => selected.includes(row.id))
-				: data;
+				? filteredData.filter((r) => selected.includes(r.id))
+				: filteredData;
 
 		const formatted = exportData.map((row) => ({
 			"ID": row.id,
@@ -121,91 +133,63 @@ const VitalsTable = () => {
 		}));
 
 		const worksheet = XLSX.utils.json_to_sheet(formatted);
-		XLSX.utils.sheet_add_aoa(worksheet, [["Vitals Records Export"]], {
-			origin: "A1",
-		});
-
-		XLSX.utils.sheet_add_json(worksheet, formatted, {
-			origin: "A2",
-			skipHeader: false,
-		});
-
-		XLSX.utils.sheet_add_aoa(worksheet, [["Vitals Records Export"]], {
-			origin: "A1",
-		});
-
-		const columnCount = Object.keys(formatted[0]).length;
-		worksheet["!merges"] = [
-			{ s: { r: 0, c: 0 }, e: { r: 0, c: columnCount - 1 } },
-		];
-
-		worksheet["A1"].s = {
-			font: { bold: true, sz: 16 },
-			alignment: { horizontal: "center" },
-		};
-
-		for (let c = 0; c < columnCount; c++) {
-			const cellAddr = XLSX.utils.encode_cell({ r: 1, c });
-			const cell = worksheet[cellAddr];
-
-			if (cell) {
-				cell.s = {
-					font: { bold: true, color: { rgb: "FFFFFF" } },
-					fill: { fgColor: { rgb: "4472C4" } },
-					alignment: { horizontal: "center" },
-				};
-			}
-		}
-
-		const colWidths = Object.keys(formatted[0]).map((key) => {
-			const maxLength = Math.max(
-				key.length,
-				...formatted.map((row) =>
-					row[key as keyof typeof row]
-						? String(row[key as keyof typeof row]).length
-						: 0,
-				),
-			);
-			return { wch: maxLength + 2 };
-		});
-		worksheet["!cols"] = colWidths;
-
 		const workbook = XLSX.utils.book_new();
-		XLSX.utils.book_append_sheet(workbook, worksheet, "Vitals");
 
+		XLSX.utils.book_append_sheet(workbook, worksheet, "Vitals");
 		XLSX.writeFile(workbook, `Vitals_${new Date().toISOString()}.xlsx`);
 
-		successToast(
-			`Exported ${
-				selected.length || data.length
-			} record(s) successfully.`,
-		);
+		successToast(`Exported ${exportData.length} record(s) successfully.`);
 	};
 
-	if (isFetching || isPending) {
-		return <Loading />;
-	}
+	if (isFetching || isPending) return <Loading />;
 
-	if (data && data?.length < 1) {
+    if (!search && data && data.length < 1) {
 		return (
 			<div className="h-[50dvh] grid place-content-center text-center bg-white p-4 rounded-xl">
+				{" "}
 				<p className="text-red font-medium">
-					There are no recorded vitals now. Please check back later.
+					{" "}
+					There are no records at this time. Please check back later.{" "}
+				</p>{" "}
+			</div>
+		);
+	}
+
+	if (filteredData.length < 1) {
+		return (
+			<div className="h-[50dvh] grid gap-4 place-content-center text-center bg-white p-4 rounded-xl">
+				<p className="text-red font-medium">
+					No record matches your search.
 				</p>
+
+				<button
+					className="btn py-2"
+					type="button"
+					onClick={() => setSearch("")}
+				>
+					Clear Search
+				</button>
 			</div>
 		);
 	}
 
 	return (
 		<div className="overflow-x-auto bg-white p-4 rounded-xl space-y-4">
-			<div className="flex gap-4 flex-wrap items-center justify-between">
+			<div className="flex flex-wrap gap-4 items-center justify-between">
 				<h2 className="text-lg font-semibold">Recorded Vitals</h2>
 
-				<div className="flex items-center gap-2">
+				<input
+					className="input max-w-xs py-2"
+					placeholder="Search by name, patient ID, task ID…"
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
+				/>
+
+				<div className="flex items-center gap-4">
 					<button
 						className="flex items-center gap-1 text-red disabled:text-gray-300"
 						type="button"
-						disabled={selected.length === 0}
+						disabled={!selected.length}
 						onClick={handleDelete}
 					>
 						<TrashIcon className="w-4 h-4" /> Delete
@@ -216,7 +200,7 @@ const VitalsTable = () => {
 						type="button"
 						onClick={handleExport}
 					>
-						<DownloadIcon className="w-4 h-4" /> Export to Excel
+						<DownloadIcon className="w-4 h-4" /> Export
 					</button>
 				</div>
 			</div>
@@ -227,57 +211,47 @@ const VitalsTable = () => {
 				</p>
 			)}
 
-			{/* Table */}
 			<Table>
 				<TableHeader>
 					<TableRow>
 						<TableHead>
 							<Checkbox
-								checked={selected.length === data?.length}
+								checked={
+									selected.length === filteredData.length
+								}
 								onCheckedChange={(checked) =>
 									toggleSelectAll(checked as boolean)
 								}
 							/>
 						</TableHead>
-
 						<TableHead>Participant Code</TableHead>
-
 						<TableHead>Patient ID</TableHead>
-
 						<TableHead>First Name</TableHead>
 						<TableHead>Last Name</TableHead>
 						<TableHead>Age</TableHead>
-
 						<TableHead>Task ID</TableHead>
-
 						<TableHead>Blood Pressure</TableHead>
-
 						<TableHead>Heart Rate</TableHead>
-
 						<TableHead>Temperature</TableHead>
-
 						<TableHead>Weight</TableHead>
-
-						<TableHead>Number of Clicks</TableHead>
-
-						<TableHead>Error Count</TableHead>
-
+						<TableHead>Clicks</TableHead>
+						<TableHead>Errors</TableHead>
 						<TableHead>Date</TableHead>
 					</TableRow>
 				</TableHeader>
 
 				<TableBody>
-					{data?.map((vitals) => {
+					{filteredData.map((vitals) => {
 						const isSelected = selected.includes(vitals.id);
 
 						return (
 							<TableRow
 								key={vitals.id}
-								className={`transition-colors ${
+								className={
 									isSelected
 										? "bg-gray-50"
 										: "hover:bg-gray-50/50"
-								}`}
+								}
 							>
 								<TableCell>
 									<Checkbox
@@ -290,33 +264,18 @@ const VitalsTable = () => {
 										}
 									/>
 								</TableCell>
-
-								<TableCell className="font-medium">
-									{vitals.staff_id}
-								</TableCell>
-
-								<TableCell className="font-medium">
-									{vitals.patient_id}
-								</TableCell>
-
+								<TableCell>{vitals.staff_id}</TableCell>
+								<TableCell>{vitals.patient_id}</TableCell>
 								<TableCell>{vitals.first_name}</TableCell>
 								<TableCell>{vitals.last_name}</TableCell>
 								<TableCell>{vitals.age}</TableCell>
-
 								<TableCell>{vitals.task_id}</TableCell>
-
 								<TableCell>{vitals.blood_pressure}</TableCell>
-
 								<TableCell>{vitals.heart_rate}</TableCell>
-
 								<TableCell>{vitals.temperature} °C</TableCell>
-
 								<TableCell>{vitals.weight}kg</TableCell>
-
 								<TableCell>{vitals.click_count}</TableCell>
-
 								<TableCell>{vitals.error_count}</TableCell>
-
 								<TableCell>
 									{formatDate(new Date(vitals.created_at))}
 								</TableCell>

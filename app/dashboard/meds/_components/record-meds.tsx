@@ -198,148 +198,148 @@ const RecordMeds = () => {
 		type: "insert",
 		invalidateKey: ["reconcile-meds"],
 		onSuccess: async (data) => {
-			const newRecord = data?.[0];
+			// const newRecord = data?.[0];
 
 			successToast("Medication recorded.");
 
-			try {
-				await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						service_id:
-							process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "",
-						template_id:
-							process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "",
-						user_id: process.env.NEXT_PUBLIC_EMAILJS_USER_ID || "",
-						accessToken:
-							process.env.NEXT_PUBLIC_EMAILJS_ACCESS_TOKEN || "",
-						template_params: {
-							to_email: "ayodeji2.okunola@live.uwe.ac.uk",
-							subject: "Medication Record Created",
-							body: `
-                <!DOCTYPE html>
-                <html lang="en">
-                <head>
-                    <meta charset="UTF-8" />
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                    <title>New Medication Record</title>
-                    <style>
-                        body {
-                            font-family: Arial, sans-serif;
-                            background-color: #f9fafb;
-                            color: #111827;
-                            margin: 0;
-                            padding: 0;
-                        }
-                        .container {
-                            max-width: 600px;
-                            margin: 40px auto;
-                            background: white;
-                            padding: 24px;
-                            border-radius: 12px;
-                            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-                        }
-                        h1 {
-                            color: #16a34a;
-                            font-size: 20px;
-                            margin-bottom: 16px;
-                        }
-                        p {
-                            font-size: 15px;
-                            line-height: 1.6;
-                            margin: 8px 0;
-                        }
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin-top: 16px;
-                        }
-                        th, td {
-                            text-align: left;
-                            padding: 10px;
-                            border-bottom: 1px solid #e5e7eb;
-                        }
-                        th {
-                            background-color: #f3f4f6;
-                            color: #374151;
-                            font-weight: 600;
-                        }
-                        .footer {
-                            margin-top: 32px;
-                            font-size: 13px;
-                            color: #6b7280;
-                            text-align: center;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <h1>New Medication Record Created</h1>
-                        <p>A new medication record has been added successfully. Below are the details:</p>
+			// try {
+			// 	await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+			// 		method: "POST",
+			// 		headers: { "Content-Type": "application/json" },
+			// 		body: JSON.stringify({
+			// 			service_id:
+			// 				process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "",
+			// 			template_id:
+			// 				process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "",
+			// 			user_id: process.env.NEXT_PUBLIC_EMAILJS_USER_ID || "",
+			// 			accessToken:
+			// 				process.env.NEXT_PUBLIC_EMAILJS_ACCESS_TOKEN || "",
+			// 			template_params: {
+			// 				to_email: "ayodeji2.okunola@live.uwe.ac.uk",
+			// 				subject: "Medication Record Created",
+			// 				body: `
+            //     <!DOCTYPE html>
+            //     <html lang="en">
+            //     <head>
+            //         <meta charset="UTF-8" />
+            //         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            //         <title>New Medication Record</title>
+            //         <style>
+            //             body {
+            //                 font-family: Arial, sans-serif;
+            //                 background-color: #f9fafb;
+            //                 color: #111827;
+            //                 margin: 0;
+            //                 padding: 0;
+            //             }
+            //             .container {
+            //                 max-width: 600px;
+            //                 margin: 40px auto;
+            //                 background: white;
+            //                 padding: 24px;
+            //                 border-radius: 12px;
+            //                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            //             }
+            //             h1 {
+            //                 color: #16a34a;
+            //                 font-size: 20px;
+            //                 margin-bottom: 16px;
+            //             }
+            //             p {
+            //                 font-size: 15px;
+            //                 line-height: 1.6;
+            //                 margin: 8px 0;
+            //             }
+            //             table {
+            //                 width: 100%;
+            //                 border-collapse: collapse;
+            //                 margin-top: 16px;
+            //             }
+            //             th, td {
+            //                 text-align: left;
+            //                 padding: 10px;
+            //                 border-bottom: 1px solid #e5e7eb;
+            //             }
+            //             th {
+            //                 background-color: #f3f4f6;
+            //                 color: #374151;
+            //                 font-weight: 600;
+            //             }
+            //             .footer {
+            //                 margin-top: 32px;
+            //                 font-size: 13px;
+            //                 color: #6b7280;
+            //                 text-align: center;
+            //             }
+            //         </style>
+            //     </head>
+            //     <body>
+            //         <div class="container">
+            //             <h1>New Medication Record Created</h1>
+            //             <p>A new medication record has been added successfully. Below are the details:</p>
 
-                        <table>
-                            <tr>
-                                <th>Patient ID</th>
-                                <td>${newRecord?.patient_id}</td>
-                            </tr>
-                            <tr>
-                                <th>First Name</th>
-                                <td>${newRecord?.first_name}</td>
-                            </tr>
-                            <tr>
-                                <th>Last Name</th>
-                                <td>${newRecord?.last_name}</td>
-                            </tr>
-                            <tr>
-                                <th>Age</th>
-                                <td>${newRecord?.age}</td>
-                            </tr>
-                            <tr>
-                                <th>Drug Name</th>
-                                <td>${newRecord?.drug_name}</td>
-                            </tr>
-                            <tr>
-                                <th>Drug Strength</th>
-                                <td>${newRecord?.drug_strength}</td>
-                            </tr>
-                            <tr>
-                                <th>Frequency</th>
-                                <td>${newRecord?.frequency}</td>
-                            </tr>
-                            <tr>
-                                <th>Participant Code</th>
-                                <td>${code}</td>
-                            </tr>
-                            <tr>
-                                <th>Task ID</th>
-                                <td>MEDS01</td>
-                            </tr>
-                            <tr>
-                                <th>Click Count</th>
-                                <td>${newRecord?.click_count ?? clickCount}</td>
-                            </tr>
-                            <tr>
-                                <th>Error Count</th>
-                                <td>${newRecord?.error_count ?? errorCount}</td>
-                            </tr>
-                        </table>
+            //             <table>
+            //                 <tr>
+            //                     <th>Patient ID</th>
+            //                     <td>${newRecord?.patient_id}</td>
+            //                 </tr>
+            //                 <tr>
+            //                     <th>First Name</th>
+            //                     <td>${newRecord?.first_name}</td>
+            //                 </tr>
+            //                 <tr>
+            //                     <th>Last Name</th>
+            //                     <td>${newRecord?.last_name}</td>
+            //                 </tr>
+            //                 <tr>
+            //                     <th>Age</th>
+            //                     <td>${newRecord?.age}</td>
+            //                 </tr>
+            //                 <tr>
+            //                     <th>Drug Name</th>
+            //                     <td>${newRecord?.drug_name}</td>
+            //                 </tr>
+            //                 <tr>
+            //                     <th>Drug Strength</th>
+            //                     <td>${newRecord?.drug_strength}</td>
+            //                 </tr>
+            //                 <tr>
+            //                     <th>Frequency</th>
+            //                     <td>${newRecord?.frequency}</td>
+            //                 </tr>
+            //                 <tr>
+            //                     <th>Participant Code</th>
+            //                     <td>${code}</td>
+            //                 </tr>
+            //                 <tr>
+            //                     <th>Task ID</th>
+            //                     <td>MEDS01</td>
+            //                 </tr>
+            //                 <tr>
+            //                     <th>Click Count</th>
+            //                     <td>${newRecord?.click_count ?? clickCount}</td>
+            //                 </tr>
+            //                 <tr>
+            //                     <th>Error Count</th>
+            //                     <td>${newRecord?.error_count ?? errorCount}</td>
+            //                 </tr>
+            //             </table>
 
-                        <p style="margin-top: 24px;">Keep up the great work! 🎉</p>
+            //             <p style="margin-top: 24px;">Keep up the great work! 🎉</p>
 
-                        <div class="footer">
-                            <p>This is an automated message from your Med Reconciliation System.</p>
-                        </div>
-                    </div>
-                </body>
-                </html>
-              `,
-						},
-					}),
-				});
-			} catch (err: unknown) {
-				console.error("Failed to send success email:", err);
-			}
+            //             <div class="footer">
+            //                 <p>This is an automated message from your Med Reconciliation System.</p>
+            //             </div>
+            //         </div>
+            //     </body>
+            //     </html>
+            //   `,
+			// 			},
+			// 		}),
+			// 	});
+			// } catch (err: unknown) {
+			// 	console.error("Failed to send success email:", err);
+			// }
 
 			reset();
 			setClickCount(0);

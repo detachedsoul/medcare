@@ -11,7 +11,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { TrashIcon, DownloadIcon } from "lucide-react";
 import { useQuery } from "@/hooks/use-query";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
@@ -41,6 +41,7 @@ const MedsTable = () => {
 	const { code, isLoading } = useClinicianCode();
 
 	const [selected, setSelected] = useState<string[]>([]);
+	const [search, setSearch] = useState("");
 
 	const { data, error, isFetching } = useQuery<Meds>({
 		table: "reconcile-meds",
@@ -48,6 +49,27 @@ const MedsTable = () => {
 		enabled: !isLoading,
 		key: ["reconcile-meds"],
 	});
+
+	const filteredData = useMemo(() => {
+		if (!data) return [];
+		if (!search.trim()) return data;
+
+		const q = search.toLowerCase();
+
+		return data.filter((meds) =>
+			[
+				meds.participant_code,
+				meds.patient_id,
+				meds.first_name,
+				meds.last_name,
+				meds.drug_name,
+				meds.task_id,
+			]
+				.join(" ")
+				.toLowerCase()
+				.includes(q),
+		);
+	}, [data, search]);
 
 	const {
 		mutate: deleteRecord,
@@ -63,147 +85,91 @@ const MedsTable = () => {
 		],
 		onSuccess: () => {
 			successToast("Record(s) deleted successfully.");
-
 			setSelected([]);
 		},
 	});
 
 	const toggleSelectAll = (checked: boolean) => {
-		if (!data) {
-			setSelected([]);
-
-			return;
-		}
-
-		if (checked) {
-			setSelected(data.map((Meds) => Meds.id));
-		} else {
-			setSelected([]);
-		}
+		setSelected(checked ? filteredData.map((meds) => meds.id) : []);
 	};
 
-	const toggleSelect = (MedsId: string, checked: boolean) => {
+	const toggleSelect = (id: string, checked: boolean) => {
 		setSelected((prev) =>
-			checked ? [...prev, MedsId] : prev.filter((id) => id !== MedsId),
+			checked ? [...prev, id] : prev.filter((v) => v !== id),
 		);
 	};
 
-	const handleDelete = async () => {
-		deleteRecord({});
-	};
+	const handleDelete = () => deleteRecord({});
 
 	const handleExport = () => {
-		if (!data || data.length === 0) {
+		if (!filteredData.length) {
 			errorToast("No records available to export.");
-
 			return;
 		}
 
 		const exportData =
 			selected.length > 0
-				? data.filter((row) => selected.includes(row.id))
-				: data;
+				? filteredData.filter((r) => selected.includes(r.id))
+				: filteredData;
 
-		const formatted = exportData.map((row) => ({
-			"ID": row.id,
-			"Participant Code": row.participant_code,
-			"Patient ID": row.patient_id,
-			"First Name": row.first_name,
-			"Last Name": row.last_name,
-			"Age": row.age,
-			"Drug Name": row.drug_name,
-			"Drug Quantity": row.drug_strength,
-			"Frequency": row.frequency,
-			"Status": row.is_active ? "Active" : "Inactive",
-			"Task ID": row.task_id,
-			"Number of Clicks": row.click_count,
-		}));
-
-        const worksheet = XLSX.utils.json_to_sheet(formatted);
-		XLSX.utils.sheet_add_aoa(worksheet, [["Meds Records Export"]], {
-			origin: "A1",
-		});
-
-		XLSX.utils.sheet_add_json(worksheet, formatted, {
-			origin: "A2",
-			skipHeader: false,
-		});
-
-
-		XLSX.utils.sheet_add_aoa(worksheet, [["Meds Records Export"]], {
-			origin: "A1",
-		});
-
-		const columnCount = Object.keys(formatted[0]).length;
-		worksheet["!merges"] = [
-			{ s: { r: 0, c: 0 }, e: { r: 0, c: columnCount - 1 } },
-		];
-
-		worksheet["A1"].s = {
-			font: { bold: true, sz: 16 },
-			alignment: { horizontal: "center" },
-		};
-
-        for (let c = 0; c < columnCount; c++) {
-			const cellAddr = XLSX.utils.encode_cell({ r: 1, c });
-            const cell = worksheet[cellAddr];
-
-			if (cell) {
-				cell.s = {
-					font: { bold: true, color: { rgb: "FFFFFF" } },
-					fill: { fgColor: { rgb: "4472C4" } },
-					alignment: { horizontal: "center" },
-				};
-			}
-		}
-
-		const colWidths = Object.keys(formatted[0]).map((key) => {
-			const maxLength = Math.max(
-				key.length,
-				...formatted.map((row) =>
-					row[key as keyof typeof row] ? String(row[key as keyof typeof row]).length : 0,
-				),
-			);
-			return { wch: maxLength + 2 };
-		});
-		worksheet["!cols"] = colWidths;
-
+		const worksheet = XLSX.utils.json_to_sheet(exportData);
 		const workbook = XLSX.utils.book_new();
-		XLSX.utils.book_append_sheet(workbook, worksheet, "Meds");
 
+		XLSX.utils.book_append_sheet(workbook, worksheet, "Meds");
 		XLSX.writeFile(workbook, `Meds_${new Date().toISOString()}.xlsx`);
 
-		successToast(
-			`Exported ${
-				selected.length || data.length
-			} record(s) successfully.`,
-		);
+		successToast(`Exported ${exportData.length} record(s).`);
 	};
 
-	if (isFetching || isPending) {
-		return <Loading />;
-	}
+	if (isFetching || isPending) return <Loading />;
 
-	if (data && data?.length < 1) {
+    if (!search && data && data.length < 1) {
 		return (
 			<div className="h-[50dvh] grid place-content-center text-center bg-white p-4 rounded-xl">
+				{" "}
 				<p className="text-red font-medium">
-					There are no records at this time. Please check back later.
+					{" "}
+					There are no records at this time. Please check back later.{" "}
+				</p>{" "}
+			</div>
+		);
+	}
+
+	if (!filteredData.length) {
+		return (
+			<div className="h-[50dvh] grid gap-4 place-content-center text-center bg-white p-4 rounded-xl">
+				<p className="text-red font-medium">
+					No meds match your search.
 				</p>
+
+				<button
+					className="btn py-2"
+					type="button"
+					onClick={() => setSearch("")}
+				>
+					Clear Search
+				</button>
 			</div>
 		);
 	}
 
 	return (
-		<div className="overflow-x-auto bg-white p-4 rounded-xl space-y-4">
-			<div className="flex gap-4 flex-wrap items-center justify-between">
+		<div className="bg-white p-4 rounded-xl space-y-4">
+			<div className="flex flex-wrap gap-4 items-center justify-between">
 				<h2 className="text-lg font-semibold">Meds</h2>
 
-				<div className="flex items-center gap-2">
+				<input
+					className="input max-w-xs py-2"
+					placeholder="Search by name, patient ID, task ID…"
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
+				/>
+
+				<div className="flex items-center gap-4">
 					<button
 						className="flex items-center gap-1 text-red disabled:text-gray-300"
 						type="button"
-						disabled={selected.length === 0}
+						disabled={!selected.length}
 						onClick={handleDelete}
 					>
 						<TrashIcon className="w-4 h-4" /> Delete
@@ -214,7 +180,7 @@ const MedsTable = () => {
 						type="button"
 						onClick={handleExport}
 					>
-						<DownloadIcon className="w-4 h-4" /> Export to Excel
+						<DownloadIcon className="w-4 h-4" /> Export
 					</button>
 				</div>
 			</div>
@@ -225,114 +191,62 @@ const MedsTable = () => {
 				</p>
 			)}
 
-			{/* Table */}
 			<Table>
 				<TableHeader>
 					<TableRow>
 						<TableHead>
 							<Checkbox
-								checked={selected.length === data?.length}
-								onCheckedChange={(checked) =>
-									toggleSelectAll(checked as boolean)
+								checked={
+									selected.length === filteredData.length
+								}
+								onCheckedChange={(v) =>
+									toggleSelectAll(v as boolean)
 								}
 							/>
 						</TableHead>
-
 						<TableHead>Participant Code</TableHead>
-
 						<TableHead>Patient ID</TableHead>
-
-                        <TableHead>First Name</TableHead>
+						<TableHead>First Name</TableHead>
 						<TableHead>Last Name</TableHead>
 						<TableHead>Age</TableHead>
-
 						<TableHead>Drug Name</TableHead>
-
-						<TableHead>Drug Quantity</TableHead>
-
-						<TableHead>Frequency</TableHead>
-
 						<TableHead>Status</TableHead>
-
-						<TableHead>Task ID</TableHead>
-
-                        <TableHead>Number of Clicks</TableHead>
-
-						<TableHead>Error Count</TableHead>
-
 						<TableHead>Date</TableHead>
 					</TableRow>
 				</TableHeader>
 
 				<TableBody>
-					{data?.map((meds) => {
-						const isSelected = selected.includes(meds.id);
-
-						return (
-							<TableRow
-								key={meds.id}
-								className={`transition-colors ${
-									isSelected
-										? "bg-gray-50"
-										: "hover:bg-gray-50/50"
-								}`}
-							>
-								<TableCell>
-									<Checkbox
-										checked={isSelected}
-										onCheckedChange={(checked) =>
-											toggleSelect(
-												meds.id,
-												checked as boolean,
-											)
-										}
-									/>
-								</TableCell>
-
-								<TableCell className="font-medium">
-									{meds.participant_code}
-								</TableCell>
-
-								<TableCell>{meds.patient_id}</TableCell>
-
-								<TableCell>{meds.first_name}</TableCell>
-								<TableCell>{meds.last_name}</TableCell>
-								<TableCell>{meds.age}</TableCell>
-
-								<TableCell>{meds.drug_name}</TableCell>
-
-								<TableCell>{meds.drug_strength}</TableCell>
-
-								<TableCell>{meds.frequency}</TableCell>
-
-								<TableCell>
-									<span
-										className={cn(
-											"py-0.5 px-3 rounded-full h-auto",
-											{
-												"bg-green text-white":
-													meds.is_active,
-												"bg-red text-white":
-													!meds.is_active,
-											},
-										)}
-									>
-										{meds.is_active ? "Active" : "Inactive"}
-									</span>
-								</TableCell>
-
-								<TableCell>{meds.task_id}</TableCell>
-
-								<TableCell>{meds.click_count}</TableCell>
-
-								<TableCell>{meds.error_count}</TableCell>
-
-								<TableCell>
-									{formatDate(new Date(meds.created_at))}
-								</TableCell>
-							</TableRow>
-						);
-					})}
+					{filteredData.map((meds) => (
+						<TableRow key={meds.id}>
+							<TableCell>
+								<Checkbox
+									checked={selected.includes(meds.id)}
+									onCheckedChange={(c) =>
+										toggleSelect(meds.id, c as boolean)
+									}
+								/>
+							</TableCell>
+							<TableCell>{meds.participant_code}</TableCell>
+							<TableCell>{meds.patient_id}</TableCell>
+							<TableCell>{meds.first_name}</TableCell>
+							<TableCell>{meds.last_name}</TableCell>
+							<TableCell>{meds.age}</TableCell>
+							<TableCell>{meds.drug_name}</TableCell>
+							<TableCell>
+								<span
+									className={cn(
+										"px-3 py-0.5 rounded-full text-white",
+										meds.is_active ? "bg-green" : "bg-red",
+									)}
+								>
+									{meds.is_active ? "Active" : "Inactive"}
+								</span>
+							</TableCell>
+							<TableCell>
+								{formatDate(new Date(meds.created_at))}
+							</TableCell>
+						</TableRow>
+					))}
 				</TableBody>
 			</Table>
 		</div>

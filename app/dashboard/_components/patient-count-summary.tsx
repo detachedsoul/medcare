@@ -1,6 +1,5 @@
 "use client";
 
-import ResetUser from "./user-reset-dialog";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
 import { useQuery } from "@/hooks/use-query";
 import { exportAllToExcel, RecordData } from "@/lib/export-all";
@@ -9,8 +8,11 @@ import {
 	TestTubeIcon,
 	PillIcon,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const PatientCountSummary = () => {
+    const { replace } = useRouter();
+
     const { code, isLoading } = useClinicianCode();
 
 	const { data, isFetching } = useQuery({
@@ -63,9 +65,19 @@ const PatientCountSummary = () => {
 						type="button"
 					>
 						Export All to Excel
-                    </button>
+					</button>
 
-					<ResetUser />
+					<button
+						className="btn bg-red after:border-red border-red py-2"
+						type="button"
+                        onClick={() => {
+                            localStorage.removeItem("clinician_code");
+
+                            replace("/auth/sign-in");
+                        }}
+					>
+						Logout
+					</button>
 				</div>
 			</div>
 

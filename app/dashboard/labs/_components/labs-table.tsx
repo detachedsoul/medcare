@@ -11,7 +11,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { TrashIcon, DownloadIcon } from "lucide-react";
 import { useQuery } from "@/hooks/use-query";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
@@ -39,6 +39,7 @@ const LabsTable = () => {
 	const { code, isLoading } = useClinicianCode();
 
 	const [selected, setSelected] = useState<string[]>([]);
+	const [search, setSearch] = useState("");
 
 	const { data, error, isFetching } = useQuery<Labs>({
 		table: "order-labs",
@@ -47,8 +48,30 @@ const LabsTable = () => {
 		key: ["order-labs"],
 	});
 
+	const filteredLabs = useMemo(() => {
+		if (!data) return [];
+		if (!search.trim()) return data;
+
+		const query = search.toLowerCase();
+
+		return data.filter((labsRecord) =>
+			[
+				labsRecord.participant_code,
+				labsRecord.patient_id,
+				labsRecord.first_name,
+				labsRecord.last_name,
+				labsRecord.test_name,
+				labsRecord.location,
+				labsRecord.task_id,
+			]
+				.join(" ")
+				.toLowerCase()
+				.includes(query),
+		);
+	}, [data, search]);
+
 	const {
-		mutate: deleteRecord,
+		mutate: deleteRecords,
 		isPending,
 		error: deletionError,
 	} = useSupabaseMutation<Labs>({
@@ -66,40 +89,35 @@ const LabsTable = () => {
 	});
 
 	const toggleSelectAll = (checked: boolean) => {
-		if (!data) {
-			setSelected([]);
-			return;
-		}
-
-		if (checked) {
-			setSelected(data.map((labs) => labs.id));
-		} else {
-			setSelected([]);
-		}
-	};
-
-	const toggleSelect = (labsId: string, checked: boolean) => {
-		setSelected((prev) =>
-			checked ? [...prev, labsId] : prev.filter((id) => id !== labsId),
+		setSelected(
+			checked ? filteredLabs.map((labsRecord) => labsRecord.id) : [],
 		);
 	};
 
-	const handleDelete = async () => {
-		deleteRecord({});
+	const toggleSelect = (recordId: string, checked: boolean) => {
+		setSelected((previous) =>
+			checked
+				? [...previous, recordId]
+				: previous.filter((id) => id !== recordId),
+		);
+	};
+
+	const handleDelete = () => {
+		deleteRecords({});
 	};
 
 	const handleExport = () => {
-		if (!data || data.length === 0) {
+		if (!filteredLabs.length) {
 			errorToast("No records available to export.");
 			return;
 		}
 
-		const exportData =
+		const exportRows =
 			selected.length > 0
-				? data.filter((row) => selected.includes(row.id))
-				: data;
+				? filteredLabs.filter((row) => selected.includes(row.id))
+				: filteredLabs;
 
-		const formatted = exportData.map((row) => ({
+		const formatted = exportRows.map((row) => ({
 			"ID": row.id,
 			"Participant Code": row.participant_code,
 			"Patient ID": row.patient_id,
@@ -113,87 +131,65 @@ const LabsTable = () => {
 		}));
 
 		const worksheet = XLSX.utils.json_to_sheet(formatted);
-		XLSX.utils.sheet_add_aoa(worksheet, [["Labs Records Export"]], {
-			origin: "A1",
-		});
-
-		XLSX.utils.sheet_add_json(worksheet, formatted, {
-			origin: "A2",
-			skipHeader: false,
-		});
-
-		const columnCount = Object.keys(formatted[0]).length;
-		worksheet["!merges"] = [
-			{ s: { r: 0, c: 0 }, e: { r: 0, c: columnCount - 1 } },
-		];
-
-		worksheet["A1"].s = {
-			font: { bold: true, sz: 16 },
-			alignment: { horizontal: "center" },
-		};
-
-		for (let c = 0; c < columnCount; c++) {
-			const cellAddr = XLSX.utils.encode_cell({ r: 1, c });
-			const cell = worksheet[cellAddr];
-
-			if (cell) {
-				cell.s = {
-					font: { bold: true, color: { rgb: "FFFFFF" } },
-					fill: { fgColor: { rgb: "4472C4" } },
-					alignment: { horizontal: "center" },
-				};
-			}
-		}
-
-		const colWidths = Object.keys(formatted[0]).map((key) => {
-			const maxLength = Math.max(
-				key.length,
-				...formatted.map((row) =>
-					row[key as keyof typeof row]
-						? String(row[key as keyof typeof row]).length
-						: 0,
-				),
-			);
-			return { wch: maxLength + 2 };
-		});
-		worksheet["!cols"] = colWidths;
-
 		const workbook = XLSX.utils.book_new();
-		XLSX.utils.book_append_sheet(workbook, worksheet, "Labs");
 
+		XLSX.utils.book_append_sheet(workbook, worksheet, "Labs");
 		XLSX.writeFile(workbook, `Labs_${new Date().toISOString()}.xlsx`);
 
-		successToast(
-			`Exported ${
-				selected.length || data.length
-			} record(s) successfully.`,
-		);
+		successToast(`Exported ${exportRows.length} record(s) successfully.`);
 	};
 
 	if (isFetching || isPending) {
 		return <Loading />;
 	}
 
-	if (data && data.length < 1) {
+    if (!search && data && data.length < 1) {
 		return (
 			<div className="h-[50dvh] grid place-content-center text-center bg-white p-4 rounded-xl">
+				{" "}
 				<p className="text-red font-medium">
-					There are no records at this time. Please check back later.
+					{" "}
+					There are no records at this time. Please check back later.{" "}
+				</p>{" "}
+			</div>
+		);
+	}
+
+	if (!filteredLabs.length) {
+		return (
+			<div className="h-[50dvh] grid gap-4 place-content-center text-center bg-white p-4 rounded-xl">
+				<p className="text-red font-medium">
+					No lab records match your search.
 				</p>
+
+				<button
+					className="btn py-2"
+					type="button"
+					onClick={() => setSearch("")}
+				>
+					Clear Search
+				</button>
 			</div>
 		);
 	}
 
 	return (
 		<div className="overflow-x-auto bg-white p-4 rounded-xl space-y-4">
-			<div className="flex gap-4 flex-wrap items-center justify-between">
+			<div className="flex flex-wrap gap-4 items-center justify-between">
 				<h2 className="text-lg font-semibold">Labs</h2>
 
-				<div className="flex items-center gap-2">
+				<input
+					className="input max-w-xs py-2"
+					placeholder="Search by name, patient ID, task ID…"
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
+				/>
+
+				<div className="flex items-center gap-4">
 					<button
 						className="flex items-center gap-1 text-red disabled:text-gray-300"
 						type="button"
-						disabled={selected.length === 0}
+						disabled={!selected.length}
 						onClick={handleDelete}
 					>
 						<TrashIcon className="w-4 h-4" /> Delete
@@ -204,7 +200,7 @@ const LabsTable = () => {
 						type="button"
 						onClick={handleExport}
 					>
-						<DownloadIcon className="w-4 h-4" /> Export to Excel
+						<DownloadIcon className="w-4 h-4" /> Export
 					</button>
 				</div>
 			</div>
@@ -220,7 +216,9 @@ const LabsTable = () => {
 					<TableRow>
 						<TableHead>
 							<Checkbox
-								checked={selected.length === data?.length}
+								checked={
+									selected.length === filteredLabs.length
+								}
 								onCheckedChange={(checked) =>
 									toggleSelectAll(checked as boolean)
 								}
@@ -241,24 +239,24 @@ const LabsTable = () => {
 				</TableHeader>
 
 				<TableBody>
-					{data?.map((orderLabs) => {
-						const isSelected = selected.includes(orderLabs.id);
+					{filteredLabs.map((labsRecord) => {
+						const isSelected = selected.includes(labsRecord.id);
 
 						return (
 							<TableRow
-								key={orderLabs.id}
-								className={`transition-colors ${
+								key={labsRecord.id}
+								className={
 									isSelected
 										? "bg-gray-50"
 										: "hover:bg-gray-50/50"
-								}`}
+								}
 							>
 								<TableCell>
 									<Checkbox
 										checked={isSelected}
 										onCheckedChange={(checked) =>
 											toggleSelect(
-												orderLabs.id,
+												labsRecord.id,
 												checked as boolean,
 											)
 										}
@@ -266,19 +264,21 @@ const LabsTable = () => {
 								</TableCell>
 
 								<TableCell className="font-medium">
-									{orderLabs.participant_code}
+									{labsRecord.participant_code}
 								</TableCell>
-								<TableCell>{orderLabs.patient_id}</TableCell>
-								<TableCell>{orderLabs.first_name}</TableCell>
-								<TableCell>{orderLabs.last_name}</TableCell>
-								<TableCell>{orderLabs.age}</TableCell>
-								<TableCell>{orderLabs.test_name}</TableCell>
-								<TableCell>{orderLabs.location}</TableCell>
-								<TableCell>{orderLabs.task_id}</TableCell>
-								<TableCell>{orderLabs.click_count}</TableCell>
-								<TableCell>{orderLabs.error_count}</TableCell>
+								<TableCell>{labsRecord.patient_id}</TableCell>
+								<TableCell>{labsRecord.first_name}</TableCell>
+								<TableCell>{labsRecord.last_name}</TableCell>
+								<TableCell>{labsRecord.age}</TableCell>
+								<TableCell>{labsRecord.test_name}</TableCell>
+								<TableCell>{labsRecord.location}</TableCell>
+								<TableCell>{labsRecord.task_id}</TableCell>
+								<TableCell>{labsRecord.click_count}</TableCell>
+								<TableCell>{labsRecord.error_count}</TableCell>
 								<TableCell>
-									{formatDate(new Date(orderLabs.created_at))}
+									{formatDate(
+										new Date(labsRecord.created_at),
+									)}
 								</TableCell>
 							</TableRow>
 						);
