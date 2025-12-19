@@ -17,70 +17,67 @@ import { useQuery } from "@/hooks/use-query";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
 import { useSupabaseMutation } from "@/hooks/use-mutation";
 import { errorToast, successToast } from "@/lib/toast";
-import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format-date";
 
-interface Meds {
+interface Labs {
 	id: string;
 	participant_code: string;
 	patient_id: string;
-	click_count: number;
-	error_count: number;
-	task_id: string;
-	drug_name: string;
 	first_name: string;
 	last_name: string;
 	age: string;
-	drug_strength: string;
-	frequency: string;
-	is_active: boolean;
+	click_count: number;
+	error_count: number;
+	date: string;
+	location: string;
+	test_name: string;
+	task_id: string;
 	created_at: string;
 }
 
-const MedsTable = () => {
+const LabsTable = () => {
 	const { code, isLoading } = useClinicianCode();
 
 	const [selected, setSelected] = useState<string[]>([]);
 	const [search, setSearch] = useState("");
 
-	const { data, error, isFetching } = useQuery<Meds>({
-		table: "reconcile-meds",
-		filters: [{ column: "participant_code", value: code }],
+	const { data, error, isFetching } = useQuery<Labs>({
+		table: "order-labs",
 		enabled: !isLoading,
-		key: ["reconcile-meds"],
+		key: ["order-labs"],
 	});
 
-	const filteredData = useMemo(() => {
+	const filteredLabs = useMemo(() => {
 		if (!data) return [];
 		if (!search.trim()) return data;
 
-		const q = search.toLowerCase();
+		const query = search.toLowerCase();
 
-		return data.filter((meds) =>
+		return data.filter((labsRecord) =>
 			[
-				meds.participant_code,
-				meds.patient_id,
-				meds.first_name,
-				meds.last_name,
-				meds.drug_name,
-				meds.task_id,
+				labsRecord.participant_code,
+				labsRecord.patient_id,
+				labsRecord.first_name,
+				labsRecord.last_name,
+				labsRecord.test_name,
+				labsRecord.location,
+				labsRecord.task_id,
 			]
 				.join(" ")
 				.toLowerCase()
-				.includes(q),
+				.includes(query),
 		);
 	}, [data, search]);
 
 	const {
-		mutate: deleteRecord,
+		mutate: deleteRecords,
 		isPending,
 		error: deletionError,
-	} = useSupabaseMutation<Meds>({
-		table: "reconcile-meds",
+	} = useSupabaseMutation<Labs>({
+		table: "order-labs",
 		type: "delete",
-		invalidateKey: ["reconcile-meds"],
+		invalidateKey: ["order-labs"],
 		filters: [
-			{ column: "participant_code", value: code },
 			{ column: "id", value: selected },
 		],
 		onSuccess: () => {
@@ -90,38 +87,59 @@ const MedsTable = () => {
 	});
 
 	const toggleSelectAll = (checked: boolean) => {
-		setSelected(checked ? filteredData.map((meds) => meds.id) : []);
-	};
-
-	const toggleSelect = (id: string, checked: boolean) => {
-		setSelected((prev) =>
-			checked ? [...prev, id] : prev.filter((v) => v !== id),
+		setSelected(
+			checked ? filteredLabs.map((labsRecord) => labsRecord.id) : [],
 		);
 	};
 
-	const handleDelete = () => deleteRecord({});
+	const toggleSelect = (recordId: string, checked: boolean) => {
+		setSelected((previous) =>
+			checked
+				? [...previous, recordId]
+				: previous.filter((id) => id !== recordId),
+		);
+	};
+
+	const handleDelete = () => {
+		deleteRecords({});
+	};
 
 	const handleExport = () => {
-		if (!filteredData.length) {
+		if (!filteredLabs.length) {
 			errorToast("No records available to export.");
 			return;
 		}
 
-		const exportData =
+		const exportRows =
 			selected.length > 0
-				? filteredData.filter((r) => selected.includes(r.id))
-				: filteredData;
+				? filteredLabs.filter((row) => selected.includes(row.id))
+				: filteredLabs;
 
-		const worksheet = XLSX.utils.json_to_sheet(exportData);
+		const formatted = exportRows.map((row) => ({
+			"ID": row.id,
+			"Participant Code": row.participant_code,
+			"Patient ID": row.patient_id,
+			"First Name": row.first_name,
+			"Last Name": row.last_name,
+			"Age": row.age,
+			"Test Name": row.test_name,
+			"Location": row.location,
+			"Task ID": row.task_id,
+			"Number of Clicks": row.click_count,
+		}));
+
+		const worksheet = XLSX.utils.json_to_sheet(formatted);
 		const workbook = XLSX.utils.book_new();
 
-		XLSX.utils.book_append_sheet(workbook, worksheet, "Meds");
-		XLSX.writeFile(workbook, `Meds_${new Date().toISOString()}.xlsx`);
+		XLSX.utils.book_append_sheet(workbook, worksheet, "Labs");
+		XLSX.writeFile(workbook, `Labs_${new Date().toISOString()}.xlsx`);
 
-		successToast(`Exported ${exportData.length} record(s).`);
+		successToast(`Exported ${exportRows.length} record(s) successfully.`);
 	};
 
-	if (isFetching || isPending) return <Loading />;
+	if (isFetching || isPending) {
+		return <Loading />;
+	}
 
     if (!search && data && data.length < 1) {
 		return (
@@ -135,11 +153,11 @@ const MedsTable = () => {
 		);
 	}
 
-	if (!filteredData.length) {
+	if (!filteredLabs.length) {
 		return (
 			<div className="h-[50dvh] grid gap-4 place-content-center text-center bg-white p-4 rounded-xl">
 				<p className="text-red font-medium">
-					No meds match your search.
+					No lab records match your search.
 				</p>
 
 				<button
@@ -156,7 +174,7 @@ const MedsTable = () => {
 	return (
 		<div className="overflow-x-auto bg-white p-4 rounded-xl space-y-4">
 			<div className="flex flex-wrap gap-4 items-center justify-between">
-				<h2 className="text-lg font-semibold">Meds</h2>
+				<h2 className="text-lg font-semibold">Labs</h2>
 
 				<input
 					className="input max-w-xs py-2"
@@ -197,10 +215,10 @@ const MedsTable = () => {
 						<TableHead>
 							<Checkbox
 								checked={
-									selected.length === filteredData.length
+									selected.length === filteredLabs.length
 								}
-								onCheckedChange={(v) =>
-									toggleSelectAll(v as boolean)
+								onCheckedChange={(checked) =>
+									toggleSelectAll(checked as boolean)
 								}
 							/>
 						</TableHead>
@@ -209,48 +227,64 @@ const MedsTable = () => {
 						<TableHead>First Name</TableHead>
 						<TableHead>Last Name</TableHead>
 						<TableHead>Age</TableHead>
-						<TableHead>Drug Name</TableHead>
-						<TableHead>Status</TableHead>
+						<TableHead>Test Name</TableHead>
+						<TableHead>Location</TableHead>
+						<TableHead>Task ID</TableHead>
+						<TableHead>Number of Clicks</TableHead>
+						<TableHead>Error Count</TableHead>
 						<TableHead>Date</TableHead>
 					</TableRow>
 				</TableHeader>
 
 				<TableBody>
-					{filteredData.map((meds) => (
-						<TableRow key={meds.id}>
-							<TableCell>
-								<Checkbox
-									checked={selected.includes(meds.id)}
-									onCheckedChange={(c) =>
-										toggleSelect(meds.id, c as boolean)
-									}
-								/>
-							</TableCell>
-							<TableCell>{meds.participant_code}</TableCell>
-							<TableCell>{meds.patient_id}</TableCell>
-							<TableCell>{meds.first_name}</TableCell>
-							<TableCell>{meds.last_name}</TableCell>
-							<TableCell>{meds.age}</TableCell>
-							<TableCell>{meds.drug_name}</TableCell>
-							<TableCell>
-								<span
-									className={cn(
-										"px-3 py-0.5 rounded-full text-white",
-										meds.is_active ? "bg-green" : "bg-red",
+					{filteredLabs.map((labsRecord) => {
+						const isSelected = selected.includes(labsRecord.id);
+
+						return (
+							<TableRow
+								key={labsRecord.id}
+								className={
+									isSelected
+										? "bg-gray-50"
+										: "hover:bg-gray-50/50"
+								}
+							>
+								<TableCell>
+									<Checkbox
+										checked={isSelected}
+										onCheckedChange={(checked) =>
+											toggleSelect(
+												labsRecord.id,
+												checked as boolean,
+											)
+										}
+									/>
+								</TableCell>
+
+								<TableCell className="font-medium">
+									{labsRecord.participant_code}
+								</TableCell>
+								<TableCell>{labsRecord.patient_id}</TableCell>
+								<TableCell>{labsRecord.first_name}</TableCell>
+								<TableCell>{labsRecord.last_name}</TableCell>
+								<TableCell>{labsRecord.age}</TableCell>
+								<TableCell>{labsRecord.test_name}</TableCell>
+								<TableCell>{labsRecord.location}</TableCell>
+								<TableCell>{labsRecord.task_id}</TableCell>
+								<TableCell>{labsRecord.click_count}</TableCell>
+								<TableCell>{labsRecord.error_count}</TableCell>
+								<TableCell>
+									{formatDate(
+										new Date(labsRecord.created_at),
 									)}
-								>
-									{meds.is_active ? "Active" : "Inactive"}
-								</span>
-							</TableCell>
-							<TableCell>
-								{formatDate(new Date(meds.created_at))}
-							</TableCell>
-						</TableRow>
-					))}
+								</TableCell>
+							</TableRow>
+						);
+					})}
 				</TableBody>
 			</Table>
 		</div>
 	);
 };
 
-export default MedsTable;
+export default LabsTable;

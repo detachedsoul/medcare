@@ -45,7 +45,6 @@ const MedsTable = () => {
 
 	const { data, error, isFetching } = useQuery<Meds>({
 		table: "reconcile-meds",
-		filters: [{ column: "participant_code", value: code }],
 		enabled: !isLoading,
 		key: ["reconcile-meds"],
 	});
@@ -80,7 +79,6 @@ const MedsTable = () => {
 		type: "delete",
 		invalidateKey: ["reconcile-meds"],
 		filters: [
-			{ column: "participant_code", value: code },
 			{ column: "id", value: selected },
 		],
 		onSuccess: () => {

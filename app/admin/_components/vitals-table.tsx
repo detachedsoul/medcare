@@ -11,43 +11,41 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useMemo, useState } from "react";
+import { useState, useMemo } from "react";
 import { TrashIcon, DownloadIcon } from "lucide-react";
 import { useQuery } from "@/hooks/use-query";
 import { useClinicianCode } from "@/hooks/use-clinician-code";
 import { useSupabaseMutation } from "@/hooks/use-mutation";
 import { errorToast, successToast } from "@/lib/toast";
-import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format-date";
 
-interface Meds {
+interface Vitals {
 	id: string;
-	participant_code: string;
+	staff_id: string;
 	patient_id: string;
-	click_count: number;
-	error_count: number;
-	task_id: string;
-	drug_name: string;
+	blood_pressure: string;
+	heart_rate: number;
 	first_name: string;
 	last_name: string;
 	age: string;
-	drug_strength: string;
-	frequency: string;
-	is_active: boolean;
-	created_at: string;
+	temperature: string;
+	weight: string;
+	task_id: string;
+	click_count: number;
+	error_count: number;
+	created_at: number;
 }
 
-const MedsTable = () => {
+const VitalsTable = () => {
 	const { code, isLoading } = useClinicianCode();
 
 	const [selected, setSelected] = useState<string[]>([]);
 	const [search, setSearch] = useState("");
 
-	const { data, error, isFetching } = useQuery<Meds>({
-		table: "reconcile-meds",
-		filters: [{ column: "participant_code", value: code }],
+	const { data, error, isFetching } = useQuery<Vitals>({
+		table: "vitals",
 		enabled: !isLoading,
-		key: ["reconcile-meds"],
+		key: ["vitals"],
 	});
 
 	const filteredData = useMemo(() => {
@@ -56,14 +54,13 @@ const MedsTable = () => {
 
 		const q = search.toLowerCase();
 
-		return data.filter((meds) =>
+		return data.filter((vitals) =>
 			[
-				meds.participant_code,
-				meds.patient_id,
-				meds.first_name,
-				meds.last_name,
-				meds.drug_name,
-				meds.task_id,
+				vitals.staff_id,
+				vitals.patient_id,
+				vitals.first_name,
+				vitals.last_name,
+				vitals.task_id,
 			]
 				.join(" ")
 				.toLowerCase()
@@ -75,12 +72,11 @@ const MedsTable = () => {
 		mutate: deleteRecord,
 		isPending,
 		error: deletionError,
-	} = useSupabaseMutation<Meds>({
-		table: "reconcile-meds",
+	} = useSupabaseMutation<Vitals>({
+		table: "vitals",
 		type: "delete",
-		invalidateKey: ["reconcile-meds"],
+		invalidateKey: ["vitals"],
 		filters: [
-			{ column: "participant_code", value: code },
 			{ column: "id", value: selected },
 		],
 		onSuccess: () => {
@@ -90,16 +86,23 @@ const MedsTable = () => {
 	});
 
 	const toggleSelectAll = (checked: boolean) => {
-		setSelected(checked ? filteredData.map((meds) => meds.id) : []);
+		if (!filteredData.length) {
+			setSelected([]);
+			return;
+		}
+
+		setSelected(checked ? filteredData.map((vitals) => vitals.id) : []);
 	};
 
 	const toggleSelect = (id: string, checked: boolean) => {
 		setSelected((prev) =>
-			checked ? [...prev, id] : prev.filter((v) => v !== id),
+			checked ? [...prev, id] : prev.filter((x) => x !== id),
 		);
 	};
 
-	const handleDelete = () => deleteRecord({});
+	const handleDelete = () => {
+		deleteRecord({});
+	};
 
 	const handleExport = () => {
 		if (!filteredData.length) {
@@ -112,13 +115,28 @@ const MedsTable = () => {
 				? filteredData.filter((r) => selected.includes(r.id))
 				: filteredData;
 
-		const worksheet = XLSX.utils.json_to_sheet(exportData);
+		const formatted = exportData.map((row) => ({
+			"ID": row.id,
+			"Participant Code": row.staff_id,
+			"Patient ID": row.patient_id,
+			"First Name": row.first_name,
+			"Last Name": row.last_name,
+			"Age": row.age,
+			"Blood Pressure": row.blood_pressure,
+			"Heart Rate": row.heart_rate,
+			"Temperature": `${row.temperature} °C`,
+			"Weight": `${row.weight}kg`,
+			"Task ID": row.task_id,
+			"Number of Clicks": row.click_count,
+		}));
+
+		const worksheet = XLSX.utils.json_to_sheet(formatted);
 		const workbook = XLSX.utils.book_new();
 
-		XLSX.utils.book_append_sheet(workbook, worksheet, "Meds");
-		XLSX.writeFile(workbook, `Meds_${new Date().toISOString()}.xlsx`);
+		XLSX.utils.book_append_sheet(workbook, worksheet, "Vitals");
+		XLSX.writeFile(workbook, `Vitals_${new Date().toISOString()}.xlsx`);
 
-		successToast(`Exported ${exportData.length} record(s).`);
+		successToast(`Exported ${exportData.length} record(s) successfully.`);
 	};
 
 	if (isFetching || isPending) return <Loading />;
@@ -135,11 +153,11 @@ const MedsTable = () => {
 		);
 	}
 
-	if (!filteredData.length) {
+	if (filteredData.length < 1) {
 		return (
 			<div className="h-[50dvh] grid gap-4 place-content-center text-center bg-white p-4 rounded-xl">
 				<p className="text-red font-medium">
-					No meds match your search.
+					No record matches your search.
 				</p>
 
 				<button
@@ -156,7 +174,7 @@ const MedsTable = () => {
 	return (
 		<div className="overflow-x-auto bg-white p-4 rounded-xl space-y-4">
 			<div className="flex flex-wrap gap-4 items-center justify-between">
-				<h2 className="text-lg font-semibold">Meds</h2>
+				<h2 className="text-lg font-semibold">Recorded Vitals</h2>
 
 				<input
 					className="input max-w-xs py-2"
@@ -199,8 +217,8 @@ const MedsTable = () => {
 								checked={
 									selected.length === filteredData.length
 								}
-								onCheckedChange={(v) =>
-									toggleSelectAll(v as boolean)
+								onCheckedChange={(checked) =>
+									toggleSelectAll(checked as boolean)
 								}
 							/>
 						</TableHead>
@@ -209,48 +227,63 @@ const MedsTable = () => {
 						<TableHead>First Name</TableHead>
 						<TableHead>Last Name</TableHead>
 						<TableHead>Age</TableHead>
-						<TableHead>Drug Name</TableHead>
-						<TableHead>Status</TableHead>
+						<TableHead>Task ID</TableHead>
+						<TableHead>Blood Pressure</TableHead>
+						<TableHead>Heart Rate</TableHead>
+						<TableHead>Temperature</TableHead>
+						<TableHead>Weight</TableHead>
+						<TableHead>Clicks</TableHead>
+						<TableHead>Errors</TableHead>
 						<TableHead>Date</TableHead>
 					</TableRow>
 				</TableHeader>
 
 				<TableBody>
-					{filteredData.map((meds) => (
-						<TableRow key={meds.id}>
-							<TableCell>
-								<Checkbox
-									checked={selected.includes(meds.id)}
-									onCheckedChange={(c) =>
-										toggleSelect(meds.id, c as boolean)
-									}
-								/>
-							</TableCell>
-							<TableCell>{meds.participant_code}</TableCell>
-							<TableCell>{meds.patient_id}</TableCell>
-							<TableCell>{meds.first_name}</TableCell>
-							<TableCell>{meds.last_name}</TableCell>
-							<TableCell>{meds.age}</TableCell>
-							<TableCell>{meds.drug_name}</TableCell>
-							<TableCell>
-								<span
-									className={cn(
-										"px-3 py-0.5 rounded-full text-white",
-										meds.is_active ? "bg-green" : "bg-red",
-									)}
-								>
-									{meds.is_active ? "Active" : "Inactive"}
-								</span>
-							</TableCell>
-							<TableCell>
-								{formatDate(new Date(meds.created_at))}
-							</TableCell>
-						</TableRow>
-					))}
+					{filteredData.map((vitals) => {
+						const isSelected = selected.includes(vitals.id);
+
+						return (
+							<TableRow
+								key={vitals.id}
+								className={
+									isSelected
+										? "bg-gray-50"
+										: "hover:bg-gray-50/50"
+								}
+							>
+								<TableCell>
+									<Checkbox
+										checked={isSelected}
+										onCheckedChange={(checked) =>
+											toggleSelect(
+												vitals.id,
+												checked as boolean,
+											)
+										}
+									/>
+								</TableCell>
+								<TableCell>{vitals.staff_id}</TableCell>
+								<TableCell>{vitals.patient_id}</TableCell>
+								<TableCell>{vitals.first_name}</TableCell>
+								<TableCell>{vitals.last_name}</TableCell>
+								<TableCell>{vitals.age}</TableCell>
+								<TableCell>{vitals.task_id}</TableCell>
+								<TableCell>{vitals.blood_pressure}</TableCell>
+								<TableCell>{vitals.heart_rate}</TableCell>
+								<TableCell>{vitals.temperature} °C</TableCell>
+								<TableCell>{vitals.weight}kg</TableCell>
+								<TableCell>{vitals.click_count}</TableCell>
+								<TableCell>{vitals.error_count}</TableCell>
+								<TableCell>
+									{formatDate(new Date(vitals.created_at))}
+								</TableCell>
+							</TableRow>
+						);
+					})}
 				</TableBody>
 			</Table>
 		</div>
 	);
 };
 
-export default MedsTable;
+export default VitalsTable;
