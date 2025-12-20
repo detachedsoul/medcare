@@ -48,7 +48,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 					<p>Welcome back. 👋</p>
 
 					<p>
-						Your Clinician Code is: <strong>{code}</strong>
+						Your Admin Code is: <strong>{code}</strong>
 					</p>
 				</div>
 
