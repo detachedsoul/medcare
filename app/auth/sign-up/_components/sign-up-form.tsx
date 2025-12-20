@@ -60,6 +60,10 @@ const SignUpForm = () => {
 
 			if (participantId) {
 				localStorage.setItem("clinician_code", participantId);
+
+				localStorage.setItem("clinician_first_name", watch("first_name"));
+
+				localStorage.setItem("clinician_last_name", watch("last_name"));
 			}
 
 			successToast("Account created successfully.");

@@ -232,6 +232,8 @@ const MedsTable = () => {
                                     />
                                 </TableCell>
                                 <TableCell>{meds.participant_code}</TableCell>
+                                <TableCell>{meds.staff_first_name}</TableCell>
+                                <TableCell>{meds.staff_last_name}</TableCell>
                                 <TableCell>{meds.patient_id}</TableCell>
                                 <TableCell>{meds.first_name}</TableCell>
                                 <TableCell>{meds.last_name}</TableCell>

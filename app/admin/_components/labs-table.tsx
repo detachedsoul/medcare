@@ -273,6 +273,8 @@ const LabsTable = () => {
                                     <TableCell className="font-medium">
                                         {labsRecord.participant_code}
                                     </TableCell>
+                                    <TableCell>{labsRecord.staff_first_name}</TableCell>
+                                    <TableCell>{labsRecord.staff_last_name}</TableCell>
                                     <TableCell>{labsRecord.patient_id}</TableCell>
                                     <TableCell>{labsRecord.first_name}</TableCell>
                                     <TableCell>{labsRecord.last_name}</TableCell>

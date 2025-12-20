@@ -272,6 +272,8 @@ const VitalsTable = () => {
                                         />
                                     </TableCell>
                                     <TableCell>{vitals.staff_id}</TableCell>
+                                    <TableCell>{vitals.staff_first_name}</TableCell>
+                                    <TableCell>{vitals.staff_last_name}</TableCell>
                                     <TableCell>{vitals.patient_id}</TableCell>
                                     <TableCell>{vitals.first_name}</TableCell>
                                     <TableCell>{vitals.last_name}</TableCell>

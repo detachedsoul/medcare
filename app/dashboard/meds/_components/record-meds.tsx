@@ -377,6 +377,8 @@ const RecordMeds = () => {
 		const payload: NewMedsPayload = {
 			...data,
 			patient_id: patientId,
+            staff_first_name: localStorage.getItem("clinician_first_name") || "",
+            staff_last_name: localStorage.getItem("clinician_last_name") || "",
 			participant_code: code ?? "",
 			task_id: "MEDS01",
 			click_count: clickCount,

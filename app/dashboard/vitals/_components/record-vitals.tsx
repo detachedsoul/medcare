@@ -400,6 +400,8 @@ const RecordVitals = () => {
 			patient_id: patientId,
 			blood_pressure: bloodPressure,
 			heart_rate: Number(data.heart_rate),
+            staff_first_name: localStorage.getItem("clinician_first_name") || "",
+            staff_last_name: localStorage.getItem("clinician_last_name") || "",
 			first_name: data.first_name,
 			last_name: data.last_name,
 			age: data.age,

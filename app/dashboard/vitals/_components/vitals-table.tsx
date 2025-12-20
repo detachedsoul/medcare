@@ -139,6 +139,8 @@ const VitalsTable = () => {
 		XLSX.writeFile(workbook, `Vitals_${new Date().toISOString()}.xlsx`);
 
 		successToast(`Exported ${exportData.length} record(s) successfully.`);
+
+        setSelected([]);
 	};
 
 	if (isFetching || isPending) return <Loading />;
@@ -151,24 +153,6 @@ const VitalsTable = () => {
 					{" "}
 					There are no records at this time. Please check back later.{" "}
 				</p>{" "}
-			</div>
-		);
-	}
-
-	if (filteredData.length < 1) {
-		return (
-			<div className="h-[50dvh] grid gap-4 place-content-center text-center bg-white p-4 rounded-xl">
-				<p className="text-red font-medium">
-					No record matches your search.
-				</p>
-
-				<button
-					className="btn py-2"
-					type="button"
-					onClick={() => setSearch("")}
-				>
-					Clear Search
-				</button>
 			</div>
 		);
 	}
@@ -211,79 +195,97 @@ const VitalsTable = () => {
 				</p>
 			)}
 
-			<Table>
-				<TableHeader>
-					<TableRow>
-						<TableHead>
-							<Checkbox
-								checked={
-									selected.length === filteredData.length
-								}
-								onCheckedChange={(checked) =>
-									toggleSelectAll(checked as boolean)
-								}
-							/>
-						</TableHead>
-						<TableHead>Participant Code</TableHead>
-						<TableHead>Patient ID</TableHead>
-						<TableHead>First Name</TableHead>
-						<TableHead>Last Name</TableHead>
-						<TableHead>Age</TableHead>
-						<TableHead>Task ID</TableHead>
-						<TableHead>Blood Pressure</TableHead>
-						<TableHead>Heart Rate</TableHead>
-						<TableHead>Temperature</TableHead>
-						<TableHead>Weight</TableHead>
-						<TableHead>Clicks</TableHead>
-						<TableHead>Errors</TableHead>
-						<TableHead>Date</TableHead>
-					</TableRow>
-				</TableHeader>
+            {filteredData.length < 1 && (
+                <div className="h-[50dvh] grid gap-4 place-content-center text-center bg-white rounded-xl">
+                    <p className="text-red font-medium">
+                        No record matches your search.
+                    </p>
 
-				<TableBody>
-					{filteredData.map((vitals) => {
-						const isSelected = selected.includes(vitals.id);
+                    <button
+                        className="btn py-2"
+                        type="button"
+                        onClick={() => setSearch("")}
+                    >
+                        Clear Search
+                    </button>
+                </div>
+            )}
 
-						return (
-							<TableRow
-								key={vitals.id}
-								className={
-									isSelected
-										? "bg-gray-50"
-										: "hover:bg-gray-50/50"
-								}
-							>
-								<TableCell>
-									<Checkbox
-										checked={isSelected}
-										onCheckedChange={(checked) =>
-											toggleSelect(
-												vitals.id,
-												checked as boolean,
-											)
-										}
-									/>
-								</TableCell>
-								<TableCell>{vitals.staff_id}</TableCell>
-								<TableCell>{vitals.patient_id}</TableCell>
-								<TableCell>{vitals.first_name}</TableCell>
-								<TableCell>{vitals.last_name}</TableCell>
-								<TableCell>{vitals.age}</TableCell>
-								<TableCell>{vitals.task_id}</TableCell>
-								<TableCell>{vitals.blood_pressure}</TableCell>
-								<TableCell>{vitals.heart_rate}</TableCell>
-								<TableCell>{vitals.temperature} °C</TableCell>
-								<TableCell>{vitals.weight}kg</TableCell>
-								<TableCell>{vitals.click_count}</TableCell>
-								<TableCell>{vitals.error_count}</TableCell>
-								<TableCell>
-									{formatDate(new Date(vitals.created_at))}
-								</TableCell>
-							</TableRow>
-						);
-					})}
-				</TableBody>
-			</Table>
+            {filteredData.length > 0 && (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>
+                                <Checkbox
+                                    checked={
+                                        selected.length === filteredData.length
+                                    }
+                                    onCheckedChange={(checked) =>
+                                        toggleSelectAll(checked as boolean)
+                                    }
+                                />
+                            </TableHead>
+                            <TableHead>Participant Code</TableHead>
+                            <TableHead>Patient ID</TableHead>
+                            <TableHead>First Name</TableHead>
+                            <TableHead>Last Name</TableHead>
+                            <TableHead>Age</TableHead>
+                            <TableHead>Task ID</TableHead>
+                            <TableHead>Blood Pressure</TableHead>
+                            <TableHead>Heart Rate</TableHead>
+                            <TableHead>Temperature</TableHead>
+                            <TableHead>Weight</TableHead>
+                            <TableHead>Clicks</TableHead>
+                            <TableHead>Errors</TableHead>
+                            <TableHead>Date</TableHead>
+                        </TableRow>
+                    </TableHeader>
+
+                    <TableBody>
+                        {filteredData.map((vitals) => {
+                            const isSelected = selected.includes(vitals.id);
+
+                            return (
+                                <TableRow
+                                    key={vitals.id}
+                                    className={
+                                        isSelected
+                                            ? "bg-gray-50"
+                                            : "hover:bg-gray-50/50"
+                                    }
+                                >
+                                    <TableCell>
+                                        <Checkbox
+                                            checked={isSelected}
+                                            onCheckedChange={(checked) =>
+                                                toggleSelect(
+                                                    vitals.id,
+                                                    checked as boolean,
+                                                )
+                                            }
+                                        />
+                                    </TableCell>
+                                    <TableCell>{vitals.staff_id}</TableCell>
+                                    <TableCell>{vitals.patient_id}</TableCell>
+                                    <TableCell>{vitals.first_name}</TableCell>
+                                    <TableCell>{vitals.last_name}</TableCell>
+                                    <TableCell>{vitals.age}</TableCell>
+                                    <TableCell>{vitals.task_id}</TableCell>
+                                    <TableCell>{vitals.blood_pressure}</TableCell>
+                                    <TableCell>{vitals.heart_rate}</TableCell>
+                                    <TableCell>{vitals.temperature} °C</TableCell>
+                                    <TableCell>{vitals.weight}kg</TableCell>
+                                    <TableCell>{vitals.click_count}</TableCell>
+                                    <TableCell>{vitals.error_count}</TableCell>
+                                    <TableCell>
+                                        {formatDate(new Date(vitals.created_at))}
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
+            )}
 		</div>
 	);
 };
