@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useSupabaseMutation } from "@/hooks/use-mutation";
 import { generateUniqueCode } from "@/lib/generate-unique-code";
 import { errorToast, successToast } from "@/lib/toast";
+import { useQuery } from "@/hooks/use-query";
 
 interface User {
 	id: string;
@@ -48,7 +49,6 @@ const SignUpForm = () => {
 
     const { data: admins } = useQuery<{id: string}>({
 		table: "admin",
-		enabled: !isLoading
 	});
 
 	const {
@@ -89,7 +89,7 @@ const SignUpForm = () => {
 			return;
 		}
 
-        if (admins?.length > 2) {
+        if (admins && admins?.length > 2) {
             errorToast("You can't create more admin accounts.");
             return;
         }
