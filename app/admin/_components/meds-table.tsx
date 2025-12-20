@@ -30,6 +30,8 @@ interface Meds {
 	drug_name: string;
 	first_name: string;
 	last_name: string;
+    staff_first_name: string;
+    staff_last_name: string;
 	age: string;
 	drug_strength: string;
 	frequency: string;
@@ -63,6 +65,8 @@ const MedsTable = () => {
 				meds.last_name,
 				meds.drug_name,
 				meds.task_id,
+				meds.staff_first_name,
+				meds.staff_last_name,
 			]
 				.join(" ")
 				.toLowerCase()
@@ -117,6 +121,8 @@ const MedsTable = () => {
 		XLSX.writeFile(workbook, `Meds_${new Date().toISOString()}.xlsx`);
 
 		successToast(`Exported ${exportData.length} record(s).`);
+
+        setSelected([]);
 	};
 
 	if (isFetching || isPending) return <Loading />;
@@ -129,24 +135,6 @@ const MedsTable = () => {
 					{" "}
 					There are no records at this time. Please check back later.{" "}
 				</p>{" "}
-			</div>
-		);
-	}
-
-	if (!filteredData.length) {
-		return (
-			<div className="h-[50dvh] grid gap-4 place-content-center text-center bg-white p-4 rounded-xl">
-				<p className="text-red font-medium">
-					No meds match your search.
-				</p>
-
-				<button
-					className="btn py-2"
-					type="button"
-					onClick={() => setSearch("")}
-				>
-					Clear Search
-				</button>
 			</div>
 		);
 	}
@@ -189,64 +177,84 @@ const MedsTable = () => {
 				</p>
 			)}
 
-			<Table>
-				<TableHeader>
-					<TableRow>
-						<TableHead>
-							<Checkbox
-								checked={
-									selected.length === filteredData.length
-								}
-								onCheckedChange={(v) =>
-									toggleSelectAll(v as boolean)
-								}
-							/>
-						</TableHead>
-						<TableHead>Participant Code</TableHead>
-						<TableHead>Patient ID</TableHead>
-						<TableHead>First Name</TableHead>
-						<TableHead>Last Name</TableHead>
-						<TableHead>Age</TableHead>
-						<TableHead>Drug Name</TableHead>
-						<TableHead>Status</TableHead>
-						<TableHead>Date</TableHead>
-					</TableRow>
-				</TableHeader>
+            {filteredData.length < 1 && (
+                <div className="h-[50dvh] grid gap-4 place-content-center text-center bg-white rounded-xl">
+                    <p className="text-red font-medium">
+                        No record matches your search.
+                    </p>
 
-				<TableBody>
-					{filteredData.map((meds) => (
-						<TableRow key={meds.id}>
-							<TableCell>
-								<Checkbox
-									checked={selected.includes(meds.id)}
-									onCheckedChange={(c) =>
-										toggleSelect(meds.id, c as boolean)
-									}
-								/>
-							</TableCell>
-							<TableCell>{meds.participant_code}</TableCell>
-							<TableCell>{meds.patient_id}</TableCell>
-							<TableCell>{meds.first_name}</TableCell>
-							<TableCell>{meds.last_name}</TableCell>
-							<TableCell>{meds.age}</TableCell>
-							<TableCell>{meds.drug_name}</TableCell>
-							<TableCell>
-								<span
-									className={cn(
-										"px-3 py-0.5 rounded-full text-white",
-										meds.is_active ? "bg-green" : "bg-red",
-									)}
-								>
-									{meds.is_active ? "Active" : "Inactive"}
-								</span>
-							</TableCell>
-							<TableCell>
-								{formatDate(new Date(meds.created_at))}
-							</TableCell>
-						</TableRow>
-					))}
-				</TableBody>
-			</Table>
+                    <button
+                        className="btn py-2"
+                        type="button"
+                        onClick={() => setSearch("")}
+                    >
+                        Clear Search
+                    </button>
+                </div>
+            )}
+
+            {filteredData.length > 0 && (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>
+                                <Checkbox
+                                    checked={
+                                        selected.length === filteredData.length
+                                    }
+                                    onCheckedChange={(v) =>
+                                        toggleSelectAll(v as boolean)
+                                    }
+                                />
+                            </TableHead>
+                            <TableHead>Participant Code</TableHead>
+                            <TableHead>Staff First Name</TableHead>
+                            <TableHead>Staff Last Name</TableHead>
+                            <TableHead>Patient ID</TableHead>
+                            <TableHead>Patient First Name</TableHead>
+                            <TableHead>Patient Last Name</TableHead>
+                            <TableHead>Age</TableHead>
+                            <TableHead>Drug Name</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Date</TableHead>
+                        </TableRow>
+                    </TableHeader>
+
+                    <TableBody>
+                        {filteredData.map((meds) => (
+                            <TableRow key={meds.id}>
+                                <TableCell>
+                                    <Checkbox
+                                        checked={selected.includes(meds.id)}
+                                        onCheckedChange={(c) =>
+                                            toggleSelect(meds.id, c as boolean)
+                                        }
+                                    />
+                                </TableCell>
+                                <TableCell>{meds.participant_code}</TableCell>
+                                <TableCell>{meds.patient_id}</TableCell>
+                                <TableCell>{meds.first_name}</TableCell>
+                                <TableCell>{meds.last_name}</TableCell>
+                                <TableCell>{meds.age}</TableCell>
+                                <TableCell>{meds.drug_name}</TableCell>
+                                <TableCell>
+                                    <span
+                                        className={cn(
+                                            "px-3 py-0.5 rounded-full text-white",
+                                            meds.is_active ? "bg-green" : "bg-red",
+                                        )}
+                                    >
+                                        {meds.is_active ? "Active" : "Inactive"}
+                                    </span>
+                                </TableCell>
+                                <TableCell>
+                                    {formatDate(new Date(meds.created_at))}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            )}
 		</div>
 	);
 };

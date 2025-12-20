@@ -25,6 +25,8 @@ interface Labs {
 	patient_id: string;
 	first_name: string;
 	last_name: string;
+    staff_first_name: string;
+    staff_last_name: string;
 	age: string;
 	click_count: number;
 	error_count: number;
@@ -62,6 +64,8 @@ const LabsTable = () => {
 				labsRecord.test_name,
 				labsRecord.location,
 				labsRecord.task_id,
+				labsRecord.staff_first_name,
+				labsRecord.staff_last_name,
 			]
 				.join(" ")
 				.toLowerCase()
@@ -119,8 +123,10 @@ const LabsTable = () => {
 			"ID": row.id,
 			"Participant Code": row.participant_code,
 			"Patient ID": row.patient_id,
-			"First Name": row.first_name,
-			"Last Name": row.last_name,
+			"Staff First Name": row.first_name,
+			"Staff Last Name": row.last_name,
+            "Patient First Name": row.first_name,
+			"Patient Last Name": row.last_name,
 			"Age": row.age,
 			"Test Name": row.test_name,
 			"Location": row.location,
@@ -135,6 +141,8 @@ const LabsTable = () => {
 		XLSX.writeFile(workbook, `Labs_${new Date().toISOString()}.xlsx`);
 
 		successToast(`Exported ${exportRows.length} record(s) successfully.`);
+
+        setSelected([]);
 	};
 
 	if (isFetching || isPending) {
@@ -149,24 +157,6 @@ const LabsTable = () => {
 					{" "}
 					There are no records at this time. Please check back later.{" "}
 				</p>{" "}
-			</div>
-		);
-	}
-
-	if (!filteredLabs.length) {
-		return (
-			<div className="h-[50dvh] grid gap-4 place-content-center text-center bg-white p-4 rounded-xl">
-				<p className="text-red font-medium">
-					No lab records match your search.
-				</p>
-
-				<button
-					className="btn py-2"
-					type="button"
-					onClick={() => setSearch("")}
-				>
-					Clear Search
-				</button>
 			</div>
 		);
 	}
@@ -209,80 +199,100 @@ const LabsTable = () => {
 				</p>
 			)}
 
-			<Table>
-				<TableHeader>
-					<TableRow>
-						<TableHead>
-							<Checkbox
-								checked={
-									selected.length === filteredLabs.length
-								}
-								onCheckedChange={(checked) =>
-									toggleSelectAll(checked as boolean)
-								}
-							/>
-						</TableHead>
-						<TableHead>Participant Code</TableHead>
-						<TableHead>Patient ID</TableHead>
-						<TableHead>First Name</TableHead>
-						<TableHead>Last Name</TableHead>
-						<TableHead>Age</TableHead>
-						<TableHead>Test Name</TableHead>
-						<TableHead>Location</TableHead>
-						<TableHead>Task ID</TableHead>
-						<TableHead>Number of Clicks</TableHead>
-						<TableHead>Error Count</TableHead>
-						<TableHead>Date</TableHead>
-					</TableRow>
-				</TableHeader>
+			{filteredLabs.length < 1 && (
+				<div className="h-[50dvh] grid gap-4 place-content-center text-center bg-white rounded-xl">
+					<p className="text-red font-medium">
+						No lab record matches your search.
+					</p>
 
-				<TableBody>
-					{filteredLabs.map((labsRecord) => {
-						const isSelected = selected.includes(labsRecord.id);
+					<button
+						className="btn py-2"
+						type="button"
+						onClick={() => setSearch("")}
+					>
+						Clear Search
+					</button>
+				</div>
+			)}
 
-						return (
-							<TableRow
-								key={labsRecord.id}
-								className={
-									isSelected
-										? "bg-gray-50"
-										: "hover:bg-gray-50/50"
-								}
-							>
-								<TableCell>
-									<Checkbox
-										checked={isSelected}
-										onCheckedChange={(checked) =>
-											toggleSelect(
-												labsRecord.id,
-												checked as boolean,
-											)
-										}
-									/>
-								</TableCell>
+            {filteredLabs.length > 0 && (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>
+                                <Checkbox
+                                    checked={
+                                        selected.length === filteredLabs.length
+                                    }
+                                    onCheckedChange={(checked) =>
+                                        toggleSelectAll(checked as boolean)
+                                    }
+                                />
+                            </TableHead>
+                            <TableHead>Participant Code</TableHead>
+                            <TableHead>Staff First Name</TableHead>
+                            <TableHead>Staff Last Name</TableHead>
+                            <TableHead>Patient ID</TableHead>
+                            <TableHead>Patient First Name</TableHead>
+                            <TableHead>Patient Last Name</TableHead>
+                            <TableHead>Age</TableHead>
+                            <TableHead>Test Name</TableHead>
+                            <TableHead>Location</TableHead>
+                            <TableHead>Task ID</TableHead>
+                            <TableHead>Number of Clicks</TableHead>
+                            <TableHead>Error Count</TableHead>
+                            <TableHead>Date</TableHead>
+                        </TableRow>
+                    </TableHeader>
 
-								<TableCell className="font-medium">
-									{labsRecord.participant_code}
-								</TableCell>
-								<TableCell>{labsRecord.patient_id}</TableCell>
-								<TableCell>{labsRecord.first_name}</TableCell>
-								<TableCell>{labsRecord.last_name}</TableCell>
-								<TableCell>{labsRecord.age}</TableCell>
-								<TableCell>{labsRecord.test_name}</TableCell>
-								<TableCell>{labsRecord.location}</TableCell>
-								<TableCell>{labsRecord.task_id}</TableCell>
-								<TableCell>{labsRecord.click_count}</TableCell>
-								<TableCell>{labsRecord.error_count}</TableCell>
-								<TableCell>
-									{formatDate(
-										new Date(labsRecord.created_at),
-									)}
-								</TableCell>
-							</TableRow>
-						);
-					})}
-				</TableBody>
-			</Table>
+                    <TableBody>
+                        {filteredLabs.map((labsRecord) => {
+                            const isSelected = selected.includes(labsRecord.id);
+
+                            return (
+                                <TableRow
+                                    key={labsRecord.id}
+                                    className={
+                                        isSelected
+                                            ? "bg-gray-50"
+                                            : "hover:bg-gray-50/50"
+                                    }
+                                >
+                                    <TableCell>
+                                        <Checkbox
+                                            checked={isSelected}
+                                            onCheckedChange={(checked) =>
+                                                toggleSelect(
+                                                    labsRecord.id,
+                                                    checked as boolean,
+                                                )
+                                            }
+                                        />
+                                    </TableCell>
+
+                                    <TableCell className="font-medium">
+                                        {labsRecord.participant_code}
+                                    </TableCell>
+                                    <TableCell>{labsRecord.patient_id}</TableCell>
+                                    <TableCell>{labsRecord.first_name}</TableCell>
+                                    <TableCell>{labsRecord.last_name}</TableCell>
+                                    <TableCell>{labsRecord.age}</TableCell>
+                                    <TableCell>{labsRecord.test_name}</TableCell>
+                                    <TableCell>{labsRecord.location}</TableCell>
+                                    <TableCell>{labsRecord.task_id}</TableCell>
+                                    <TableCell>{labsRecord.click_count}</TableCell>
+                                    <TableCell>{labsRecord.error_count}</TableCell>
+                                    <TableCell>
+                                        {formatDate(
+                                            new Date(labsRecord.created_at),
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
+            )}
 		</div>
 	);
 };
