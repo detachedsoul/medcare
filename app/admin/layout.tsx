@@ -2,11 +2,13 @@
 
 import Header from "./_components/header";
 import Loading from "./loading";
-import { useClinicianCode } from "@/hooks/use-clinician-code";
-import { redirect } from "next/navigation";
+import { useAdminCode } from "@/hooks/use-admin-code";
+import { redirect, usePathname } from "next/navigation";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode; }) => {
-    const { code, isLoading } = useClinicianCode();
+    const pathname = usePathname();
+
+    const { code, isLoading } = useAdminCode();
 
     if (isLoading) {
         return <Loading />
@@ -15,6 +17,14 @@ const DashboardLayout = ({ children }: { children: React.ReactNode; }) => {
     if (!isLoading && !code) {
 		redirect("/admin/sign-in");
 	}
+
+    if (pathname === "/admin/sign-in" || pathname === "/admin/sign-up") {
+        return (
+            <div className="h-dvh grid place-content-center">
+                {children}
+            </div>
+        );
+    }
 
     return (
 		<div className="lg:flex relative">

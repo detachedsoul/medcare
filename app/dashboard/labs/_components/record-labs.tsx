@@ -390,8 +390,9 @@ const RecordLabs = () => {
 
 		const payload: NewLabsPayload = {
 			...data,
-            staff_first_name: localStorage.getItem("clinician_first_name") || "",
-            staff_last_name: localStorage.getItem("clinician_last_name") || "",
+			staff_first_name:
+				localStorage.getItem("clinician_first_name") || "",
+			staff_last_name: localStorage.getItem("clinician_last_name") || "",
 			patient_id: patientId,
 			participant_code: code ?? "",
 			task_id: "LABS01",

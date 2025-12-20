@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export function useClinicianCode() {
+export function useAdminCode() {
 	const [code, setCode] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 
@@ -11,13 +11,13 @@ export function useClinicianCode() {
 
 		const timeout = setTimeout(() => {
 			const storedCode =
-				localStorage.getItem("clinician_code")
+				localStorage.getItem("admin_code");
 
 			setCode(storedCode);
 
 			setIsLoading(false);
 
-            localStorage.setItem("clinician_code", storedCode);
+            localStorage.setItem("admin_code", storedCode);
 		}, 0);
 
 		return () => clearTimeout(timeout);
