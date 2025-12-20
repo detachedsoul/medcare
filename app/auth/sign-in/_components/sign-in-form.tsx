@@ -12,6 +12,7 @@ interface User {
 	email: string;
 	password: string;
 	first_name?: string | null;
+	first_last?: string | null;
 }
 
 interface FormValues {
@@ -69,9 +70,9 @@ const SignInForm = () => {
 
 		localStorage.setItem("clinician_code", user.participant_code);
 
-		localStorage.setItem("clinician_first_name", user.first_name);
+		localStorage.setItem("clinician_first_name", user.first_name ?? "");
 
-		localStorage.setItem("clinician_last_name", user.last_name);
+		localStorage.setItem("clinician_last_name", user.last_name ?? "");
 
 		successToast(
 			`Welcome${user.first_name ? `, ${user.first_name}` : ""}!`,

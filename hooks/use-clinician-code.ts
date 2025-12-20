@@ -13,11 +13,13 @@ export function useClinicianCode() {
 			const storedCode =
 				localStorage.getItem("clinician_code")
 
-			setCode(storedCode);
+			if (storedCode) {
+                setCode(storedCode);
 
-			setIsLoading(false);
+				localStorage.setItem("clinician_code", storedCode);
+            }
 
-            localStorage.setItem("clinician_code", storedCode);
+            setIsLoading(false);
 		}, 0);
 
 		return () => clearTimeout(timeout);

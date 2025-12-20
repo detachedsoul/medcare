@@ -34,6 +34,7 @@ const SignUpForm = () => {
 		register,
 		handleSubmit,
         reset,
+        watch,
 		formState: { errors, isSubmitting, isValid },
 	} = useForm<FormValues>({
 		resolver: zodResolver(signUpSchema),

@@ -10,11 +10,11 @@ const DashboardLayout = ({ children }: { children: React.ReactNode; }) => {
 
     const { code, isLoading } = useAdminCode();
 
-    if (isLoading) {
+    if (pathname !== "/admin/sign-in" && pathname !== "/admin/sign-up" && isLoading) {
         return <Loading />
     }
 
-    if (!isLoading && !code) {
+    if (pathname !== "/admin/sign-in" && pathname !== "/admin/sign-up" && !isLoading && !code) {
 		redirect("/admin/sign-in");
 	}
 

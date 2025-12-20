@@ -13,11 +13,13 @@ export function useAdminCode() {
 			const storedCode =
 				localStorage.getItem("admin_code");
 
-			setCode(storedCode);
+            if (storedCode) {
+                setCode(storedCode);
 
-			setIsLoading(false);
+                localStorage.setItem("admin_code", storedCode);
+            }
 
-            localStorage.setItem("admin_code", storedCode);
+            setIsLoading(false);
 		}, 0);
 
 		return () => clearTimeout(timeout);
