@@ -136,7 +136,7 @@ const SignInForm = () => {
 					Don’t have an account yet?{" "}
 					<Link
 						className="text-blue hover:underline underline-offset-4 font-medium"
-						href="/auth/sign-up"
+						href="/admin/sign-up"
 					>
 						Sign up instead
 					</Link>
