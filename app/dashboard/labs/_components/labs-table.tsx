@@ -211,7 +211,7 @@ const LabsTable = () => {
                 </div>
             )}
 
-            {filteredData.length > 0 && (
+            {filteredLabs.length > 0 && (
                 <Table>
                     <TableHeader>
                         <TableRow>
