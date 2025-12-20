@@ -46,6 +46,11 @@ const SignUpForm = () => {
         },
 	});
 
+    const { data: admins } = useQuery<{id: string}>({
+		table: "admin",
+		enabled: !isLoading
+	});
+
 	const {
 		mutate: addUser,
 		isPending,
@@ -83,6 +88,11 @@ const SignUpForm = () => {
 			errorToast("Participant ID is required");
 			return;
 		}
+
+        if (admins?.length > 2) {
+            errorToast("You can't create more admin accounts.");
+            return;
+        }
 
 		addUser({
 			participant_code,
