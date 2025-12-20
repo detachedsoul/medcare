@@ -142,6 +142,16 @@ const SignInForm = () => {
 						Sign up instead
 					</Link>
 				</p>
+
+				<p className="-mt-2">
+					Forgot your password?{" "}
+					<Link
+						className="text-blue hover:underline underline-offset-4 font-medium"
+						href="/admin/password-reset"
+					>
+						Reset your password
+					</Link>
+				</p>
 			</form>
 		</div>
 	);

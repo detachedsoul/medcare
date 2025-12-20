@@ -5,28 +5,41 @@ import Loading from "./loading";
 import { useAdminCode } from "@/hooks/use-admin-code";
 import { redirect, usePathname } from "next/navigation";
 
-const DashboardLayout = ({ children }: { children: React.ReactNode; }) => {
-    const pathname = usePathname();
+const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+	const pathname = usePathname();
 
-    const { code, isLoading } = useAdminCode();
+	const { code, isLoading } = useAdminCode();
 
-    if (pathname !== "/admin/sign-in" && pathname !== "/admin/sign-up" && isLoading) {
-        return <Loading />
-    }
+	if (
+		pathname !== "/admin/sign-in" &&
+		pathname !== "/admin/sign-up" &&
+		pathname !== "/admin/password-reset" &&
+		isLoading
+	) {
+		return <Loading />;
+	}
 
-    if (pathname !== "/admin/sign-in" && pathname !== "/admin/sign-up" && !isLoading && !code) {
+	if (
+		pathname !== "/admin/sign-in" &&
+		pathname !== "/admin/sign-up" &&
+		pathname !== "/admin/password-reset" &&
+		!isLoading &&
+		!code
+	) {
 		redirect("/admin/sign-in");
 	}
 
-    if (pathname === "/admin/sign-in" || pathname === "/admin/sign-up") {
-        return (
-            <div className="h-dvh grid place-content-center">
-                {children}
-            </div>
-        );
-    }
+	if (
+		pathname === "/admin/sign-in" ||
+		pathname === "/admin/sign-up" ||
+		pathname === "/admin/password-reset"
+	) {
+		return (
+			<div className="h-dvh grid place-content-center">{children}</div>
+		);
+	}
 
-    return (
+	return (
 		<div className="lg:flex relative">
 			<Header />
 

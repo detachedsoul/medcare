@@ -49,10 +49,10 @@ const SignInForm = () => {
 	const onSubmit = async () => {
 		const { email, password } = getValues();
 
-        if (!email || !password) {
-            errorToast("Email and password are required.");
-            return;
-        }
+		if (!email || !password) {
+			errorToast("Email and password are required.");
+			return;
+		}
 
 		const res = await refetch();
 
@@ -144,6 +144,16 @@ const SignInForm = () => {
 						href="/auth/sign-up"
 					>
 						Sign up instead
+					</Link>
+				</p>
+
+				<p className="-mt-2">
+					Forgot your password?{" "}
+					<Link
+						className="text-blue hover:underline underline-offset-4 font-medium"
+						href="/auth/password-reset"
+					>
+						Reset your password
 					</Link>
 				</p>
 			</form>

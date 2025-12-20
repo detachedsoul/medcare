@@ -16,7 +16,7 @@ const generateCode = () => {
 	return `${prefix}-${part1}-${part2}`;
 };
 
-const randomString = (length: number) => {
+export const randomString = (length: number) => {
 	const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 	const bytes = randomBytes(length);
