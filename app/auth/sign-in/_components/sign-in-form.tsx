@@ -12,7 +12,7 @@ interface User {
 	email: string;
 	password: string;
 	first_name?: string | null;
-	first_last?: string | null;
+	last_name?: string | null;
 }
 
 interface FormValues {

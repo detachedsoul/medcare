@@ -1,6 +1,6 @@
 "use client";
 
-import { useClinicianCode } from "@/hooks/use-clinician-code";
+import { useAdminCode } from "@/hooks/use-admin-code";
 import { useQuery } from "@/hooks/use-query";
 import { exportAllToExcel, RecordData } from "@/lib/export-all";
 import {
@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 const PatientCountSummary = () => {
     const { replace } = useRouter();
 
-    const { code, isLoading } = useClinicianCode();
+    const { code, isLoading } = useAdminCode();
 
 	const { data, isFetching } = useQuery({
 		table: "vitals",
@@ -68,9 +68,9 @@ const PatientCountSummary = () => {
 						className="btn bg-red after:border-red border-red py-2"
 						type="button"
                         onClick={() => {
-                            localStorage.removeItem("clinician_code");
+                            localStorage.removeItem("admin_code");
 
-                            replace("/auth/sign-in");
+                            replace("/admin/sign-in");
                         }}
 					>
 						Logout
