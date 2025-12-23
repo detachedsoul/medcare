@@ -27,6 +27,13 @@ interface Vitals {
 	error_count: number;
 }
 
+interface NewPatient {
+    id: string;
+	first_name: string;
+	last_name: string;
+	age: string;
+}
+
 interface FormErrorItem {
 	message?: string;
 	[key: string]: any;
@@ -49,7 +56,7 @@ interface NewVitalsPayload {
 	task_id: string;
 	click_count: number;
 	error_count: number;
-	[key: string]: any;
+    [key: string]: any;
 }
 
 const vitalsSchema = z.object({
@@ -108,16 +115,24 @@ type VitalsFormData = z.infer<typeof vitalsSchema>;
 const RecordVitals = () => {
 	const { code } = useClinicianCode();
 
-    const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+	const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
-    const firstRunRef = useRef(true);
+	const [showNewPatientModal, setShowNewPatientModal] = useState(false);
 
-    const prevErrorsRef = useRef<Set<string>>(new Set());
+	const [newPatientData, setNewPatientData] = useState({
+		first_name: "",
+		last_name: "",
+		age: "",
+	});
+
+	const firstRunRef = useRef(true);
+	const prevErrorsRef = useRef<Set<string>>(new Set());
 
 	const {
 		register,
 		handleSubmit,
         reset,
+        setValue,
 		formState: { errors, isValid },
 	} = useForm<VitalsFormData>({
 		resolver: async (data, context, options) => {
@@ -125,11 +140,10 @@ const RecordVitals = () => {
 				data,
 				context,
 				options,
-            );
+			);
 
-            if (firstRunRef.current) {
+			if (firstRunRef.current) {
 				firstRunRef.current = false;
-
 				return result;
 			}
 
@@ -140,11 +154,10 @@ const RecordVitals = () => {
 			currentErrorMessages.forEach((msg) => {
 				if (!prevErrorsRef.current.has(msg)) {
 					prevErrorsRef.current.add(msg);
-					setErrorCount((prev) => prev + 1); // Increment only for new errors
+					setErrorCount((prev) => prev + 1);
 				}
 			});
 
-			// Remove resolved errors from the set
 			prevErrorsRef.current.forEach((msg) => {
 				if (!currentErrorMessages.includes(msg)) {
 					prevErrorsRef.current.delete(msg);
@@ -156,15 +169,71 @@ const RecordVitals = () => {
 		mode: "all",
     });
 
-    const handlePatientSelect = (patient: Patient) => {
-		setSelectedPatient(patient);
+	const { mutate: createPatient, isPending: isCreatingPatient } =
+		useSupabaseMutation<NewPatient>({
+			table: "patients",
+			type: "insert",
+			invalidateKey: ["patients"],
+			onSuccess: (data) => {
+				if (data?.[0]) {
+					const createdPatient: Patient = {
+						id: data[0].id,
+						first_name: data[0].first_name,
+						last_name: data[0].last_name,
+						age: data[0].age,
+					};
 
-		reset((prev) => ({
-			...prev,
-			first_name: patient.first_name,
-			last_name: patient.last_name,
-			age: patient.age,
-		}));
+                    setSelectedPatient(createdPatient);
+
+                    setValue("first_name", createdPatient.first_name, { shouldValidate: true });
+
+                    setValue("last_name", createdPatient.last_name, { shouldValidate: true });
+
+                    setValue("age", String(createdPatient.age), {
+						shouldValidate: true,
+					});
+
+                    successToast("Patient created successfully");
+
+                    setShowNewPatientModal(false);
+				}
+			},
+			onError: (err: any) => {
+				errorToast(err.message);
+			},
+		});
+
+	const handlePatientSelect = (patient: Patient | "new") => {
+		if (patient === "new") {
+			setShowNewPatientModal(true);
+			setSelectedPatient(null);
+		} else {
+            setSelectedPatient(patient);
+
+			reset((prev) => ({
+				...prev,
+				first_name: patient.first_name,
+				last_name: patient.last_name,
+				age: patient.age,
+			}));
+		}
+	};
+
+	const handleNewPatientSubmit = () => {
+		if (
+			!newPatientData.first_name ||
+			!newPatientData.last_name ||
+			!newPatientData.age
+		) {
+			errorToast("Please fill in all required fields");
+			return;
+		}
+
+		createPatient({
+			first_name: newPatientData.first_name,
+			last_name: newPatientData.last_name,
+			age: newPatientData.age,
+		});
 	};
 
 	const [clickCount, setClickCount] = useState<number>(0);
@@ -228,160 +297,21 @@ const RecordVitals = () => {
 		table: "vitals",
 		type: "insert",
 		invalidateKey: ["vitals"],
-		onSuccess: async (data) => {
-			// const newRecord = data?.[0];
-
+		onSuccess: async () => {
 			successToast("Vitals recorded.");
-
-			// try {
-			// 	await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-			// 		method: "POST",
-			// 		headers: { "Content-Type": "application/json" },
-			// 		body: JSON.stringify({
-			// 			service_id:
-			// 				process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "",
-			// 			template_id:
-			// 				process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "",
-			// 			user_id: process.env.NEXT_PUBLIC_EMAILJS_USER_ID || "",
-			// 			accessToken:
-			// 				process.env.NEXT_PUBLIC_EMAILJS_ACCESS_TOKEN || "",
-			// 			template_params: {
-			// 				to_email: "ayodeji2.okunola@live.uwe.ac.uk",
-			// 				subject: "Vitals Record Created",
-			// 				body: `
-            //     <!DOCTYPE html>
-            //     <html lang="en">
-            //     <head>
-            //         <meta charset="UTF-8" />
-            //         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            //         <title>New Vitals Record</title>
-            //         <style>
-            //             body {
-            //                 font-family: Arial, sans-serif;
-            //                 background-color: #f9fafb;
-            //                 color: #111827;
-            //                 margin: 0;
-            //                 padding: 0;
-            //             }
-            //             .container {
-            //                 max-width: 600px;
-            //                 margin: 40px auto;
-            //                 background: white;
-            //                 padding: 24px;
-            //                 border-radius: 12px;
-            //                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            //             }
-            //             h1 {
-            //                 color: #16a34a;
-            //                 font-size: 20px;
-            //                 margin-bottom: 16px;
-            //             }
-            //             p {
-            //                 font-size: 15px;
-            //                 line-height: 1.6;
-            //                 margin: 8px 0;
-            //             }
-            //             table {
-            //                 width: 100%;
-            //                 border-collapse: collapse;
-            //                 margin-top: 16px;
-            //             }
-            //             th, td {
-            //                 text-align: left;
-            //                 padding: 10px;
-            //                 border-bottom: 1px solid #e5e7eb;
-            //             }
-            //             th {
-            //                 background-color: #f3f4f6;
-            //                 color: #374151;
-            //                 font-weight: 600;
-            //             }
-            //             .footer {
-            //                 margin-top: 32px;
-            //                 font-size: 13px;
-            //                 color: #6b7280;
-            //                 text-align: center;
-            //             }
-            //         </style>
-            //     </head>
-            //     <body>
-            //         <div class="container">
-            //             <h1>New Vitals Record Created</h1>
-            //             <p>A new vitals record has been added successfully. Below are the details:</p>
-
-            //             <table>
-            //                 <tr>
-            //                     <th>Patient ID</th>
-            //                     <td>${newRecord?.patient_id}</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>First Name</th>
-            //                     <td>${newRecord?.first_name}</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Last Name</th>
-            //                     <td>${newRecord?.last_name}</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Age</th>
-            //                     <td>${newRecord?.age}</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Blood Pressure</th>
-            //                     <td>${newRecord?.blood_pressure}</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Heart Rate</th>
-            //                     <td>${newRecord?.heart_rate} bpm</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Temperature</th>
-            //                     <td>${newRecord?.temperature} °C</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Weight</th>
-            //                     <td>${newRecord?.weight} kg</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Participant Code</th>
-            //                     <td>${code}</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Task ID</th>
-            //                     <td>VITALS01</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Click Count</th>
-            //                     <td>${newRecord?.click_count}</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Error Count</th>
-            //                     <td>${newRecord?.error_count}</td>
-            //                 </tr>
-            //             </table>
-
-            //             <p style="margin-top: 24px;">Keep up the great work! 🎉</p>
-
-            //             <div class="footer">
-            //                 <p>This is an automated message from your Med Reconciliation System.</p>
-            //             </div>
-            //         </div>
-            //     </body>
-            //     </html>
-            //   `,
-			// 			},
-			// 		}),
-			// 	});
-			// } catch (err: unknown) {
-			// 	console.error("Failed to send success email:", err);
-			// }
 
 			reset();
 			setClickCount(0);
 			setErrorCount(0);
 			allErrorsRef.current.clear();
-            setIsCounting(false);
-            setSelectedPatient(null);
+			setIsCounting(false);
+			setSelectedPatient(null);
+
+			setNewPatientData({
+				first_name: "",
+				last_name: "",
+				age: "",
+			});
 		},
 		onError: (err: any) => {
 			setErrorCount((prev) => prev + 1);
@@ -392,16 +322,18 @@ const RecordVitals = () => {
 	const onSubmit = async (data: VitalsFormData): Promise<void> => {
 		setIsCounting(false);
 
-		const patientId: string = generateUniqueCode();
+		const patientId: string = selectedPatient?.id || generateUniqueCode();
 
 		const bloodPressure = `${data.systolic}/${data.diastolic}`;
 
-        const payload: NewVitalsPayload = {
+		const payload: NewVitalsPayload = {
 			patient_id: patientId,
 			blood_pressure: bloodPressure,
 			heart_rate: Number(data.heart_rate),
-            staff_first_name: localStorage.getItem("clinician_first_name") || "",
-            staff_last_name: localStorage.getItem("clinician_last_name") || "",
+			staff_first_name:
+				localStorage.getItem("clinician_first_name") || "",
+			staff_last_name:
+				localStorage.getItem("clinician_last_name") || "",
 			first_name: data.first_name,
 			last_name: data.last_name,
 			age: data.age,
@@ -443,6 +375,7 @@ const RecordVitals = () => {
 								patients={patients}
 								value={selectedPatient}
 								onSelect={handlePatientSelect}
+								onAddNew={() => handlePatientSelect("new")}
 							/>
 						</div>
 					</label>
@@ -569,6 +502,106 @@ const RecordVitals = () => {
 					</div>
 				</form>
 			</div>
+
+			{showNewPatientModal && (
+				<div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-5000 backdrop-blur-lg">
+					<div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+						<div className="flex justify-between items-center mb-4">
+							<h3 className="font-poppins font-bold text-xl">
+								Add New Patient
+							</h3>
+
+							<button
+								onClick={() => setShowNewPatientModal(false)}
+								className="py-0.5 px-1.5 hover:bg-gray-100 rounded-full"
+								type="button"
+							>
+								✕
+							</button>
+						</div>
+
+						<div className="grid gap-4">
+							<label className="grid gap-2">
+								<span className="font-poppins font-medium text-sm">
+									First Name{" "}
+									<span className="text-red">*</span>
+								</span>
+
+								<input
+									type="text"
+									className="input md:py-2 rounded-lg"
+									value={newPatientData.first_name}
+									onChange={(e) =>
+										setNewPatientData((prev) => ({
+											...prev,
+											first_name: e.target.value,
+										}))
+									}
+								/>
+							</label>
+
+							<label className="grid gap-2">
+								<span className="font-poppins font-medium text-sm">
+									Last Name{" "}
+									<span className="text-red">*</span>
+								</span>
+								<input
+									type="text"
+									className="input md:py-2 rounded-lg"
+									value={newPatientData.last_name}
+									onChange={(e) =>
+										setNewPatientData((prev) => ({
+											...prev,
+											last_name: e.target.value,
+										}))
+									}
+								/>
+							</label>
+
+							<label className="grid gap-2">
+								<span className="font-poppins font-medium text-sm">
+									Age <span className="text-red">*</span>
+								</span>
+								<input
+									type="text"
+									inputMode="numeric"
+									className="input md:py-2 rounded-lg"
+									value={newPatientData.age}
+									onChange={(e) =>
+										setNewPatientData((prev) => ({
+											...prev,
+											age: e.target.value,
+										}))
+									}
+								/>
+							</label>
+
+							<div className="grid gap-3 md:grid-cols-2 mt-4">
+								<button
+									type="button"
+									onClick={() =>
+										setShowNewPatientModal(false)
+									}
+									className="btn bg-red after:border-red border-red"
+								>
+									Cancel
+								</button>
+
+								<button
+									type="button"
+									onClick={handleNewPatientSubmit}
+									className="btn"
+									disabled={isCreatingPatient}
+								>
+									{isCreatingPatient
+										? "Adding..."
+										: "Add Patient"}
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 };

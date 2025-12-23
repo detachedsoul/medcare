@@ -52,6 +52,13 @@ interface NewMedsPayload {
 	[key: string]: any;
 }
 
+interface NewPatient {
+	id: string;
+	first_name: string;
+	last_name: string;
+	age: string;
+}
+
 const MedsSchema = z.object({
 	first_name: z.string().min(1, "Please enter first name"),
 	last_name: z.string().min(1, "Please enter last name"),
@@ -94,6 +101,14 @@ const RecordMeds = () => {
 
     const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
+    const [showNewPatientModal, setShowNewPatientModal] = useState(false);
+
+	const [newPatientData, setNewPatientData] = useState({
+		first_name: "",
+		last_name: "",
+		age: "",
+	});
+
     const firstRunRef = useRef(true);
 
     const prevErrorsRef = useRef<Set<string>>(new Set());
@@ -102,6 +117,7 @@ const RecordMeds = () => {
 		register,
 		handleSubmit,
 		reset,
+        setValue,
 		formState: { errors, isValid },
 	} = useForm<MedsFormData>({
 		resolver: async (data, context, options) => {
@@ -139,18 +155,6 @@ const RecordMeds = () => {
 		},
 		mode: "all",
 	});
-
-    const handlePatientSelect = (patient: Patient) => {
-		setSelectedPatient(patient);
-
-		reset((prev) => ({
-			...prev,
-			first_name: patient.first_name,
-			last_name: patient.last_name,
-			age: patient.age,
-		}));
-	};
-
 	const [clickCount, setClickCount] = useState<number>(0);
 	const [errorCount, setErrorCount] = useState<number>(0);
 	const [isCounting, setIsCounting] = useState<boolean>(false);
@@ -212,149 +216,8 @@ const RecordMeds = () => {
 		table: "reconcile-meds",
 		type: "insert",
 		invalidateKey: ["reconcile-meds"],
-		onSuccess: async (data) => {
-			// const newRecord = data?.[0];
-
+		onSuccess: async () => {
 			successToast("Medication recorded.");
-
-			// try {
-			// 	await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-			// 		method: "POST",
-			// 		headers: { "Content-Type": "application/json" },
-			// 		body: JSON.stringify({
-			// 			service_id:
-			// 				process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "",
-			// 			template_id:
-			// 				process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "",
-			// 			user_id: process.env.NEXT_PUBLIC_EMAILJS_USER_ID || "",
-			// 			accessToken:
-			// 				process.env.NEXT_PUBLIC_EMAILJS_ACCESS_TOKEN || "",
-			// 			template_params: {
-			// 				to_email: "ayodeji2.okunola@live.uwe.ac.uk",
-			// 				subject: "Medication Record Created",
-			// 				body: `
-            //     <!DOCTYPE html>
-            //     <html lang="en">
-            //     <head>
-            //         <meta charset="UTF-8" />
-            //         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            //         <title>New Medication Record</title>
-            //         <style>
-            //             body {
-            //                 font-family: Arial, sans-serif;
-            //                 background-color: #f9fafb;
-            //                 color: #111827;
-            //                 margin: 0;
-            //                 padding: 0;
-            //             }
-            //             .container {
-            //                 max-width: 600px;
-            //                 margin: 40px auto;
-            //                 background: white;
-            //                 padding: 24px;
-            //                 border-radius: 12px;
-            //                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            //             }
-            //             h1 {
-            //                 color: #16a34a;
-            //                 font-size: 20px;
-            //                 margin-bottom: 16px;
-            //             }
-            //             p {
-            //                 font-size: 15px;
-            //                 line-height: 1.6;
-            //                 margin: 8px 0;
-            //             }
-            //             table {
-            //                 width: 100%;
-            //                 border-collapse: collapse;
-            //                 margin-top: 16px;
-            //             }
-            //             th, td {
-            //                 text-align: left;
-            //                 padding: 10px;
-            //                 border-bottom: 1px solid #e5e7eb;
-            //             }
-            //             th {
-            //                 background-color: #f3f4f6;
-            //                 color: #374151;
-            //                 font-weight: 600;
-            //             }
-            //             .footer {
-            //                 margin-top: 32px;
-            //                 font-size: 13px;
-            //                 color: #6b7280;
-            //                 text-align: center;
-            //             }
-            //         </style>
-            //     </head>
-            //     <body>
-            //         <div class="container">
-            //             <h1>New Medication Record Created</h1>
-            //             <p>A new medication record has been added successfully. Below are the details:</p>
-
-            //             <table>
-            //                 <tr>
-            //                     <th>Patient ID</th>
-            //                     <td>${newRecord?.patient_id}</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>First Name</th>
-            //                     <td>${newRecord?.first_name}</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Last Name</th>
-            //                     <td>${newRecord?.last_name}</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Age</th>
-            //                     <td>${newRecord?.age}</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Drug Name</th>
-            //                     <td>${newRecord?.drug_name}</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Drug Strength</th>
-            //                     <td>${newRecord?.drug_strength}</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Frequency</th>
-            //                     <td>${newRecord?.frequency}</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Participant Code</th>
-            //                     <td>${code}</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Task ID</th>
-            //                     <td>MEDS01</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Click Count</th>
-            //                     <td>${newRecord?.click_count ?? clickCount}</td>
-            //                 </tr>
-            //                 <tr>
-            //                     <th>Error Count</th>
-            //                     <td>${newRecord?.error_count ?? errorCount}</td>
-            //                 </tr>
-            //             </table>
-
-            //             <p style="margin-top: 24px;">Keep up the great work! 🎉</p>
-
-            //             <div class="footer">
-            //                 <p>This is an automated message from your Med Reconciliation System.</p>
-            //             </div>
-            //         </div>
-            //     </body>
-            //     </html>
-            //   `,
-			// 			},
-			// 		}),
-			// 	});
-			// } catch (err: unknown) {
-			// 	console.error("Failed to send success email:", err);
-			// }
 
 			reset();
 			setClickCount(0);
@@ -369,10 +232,81 @@ const RecordMeds = () => {
 		},
 	});
 
+    const { mutate: createPatient, isPending: isCreatingPatient } =
+		useSupabaseMutation<NewPatient>({
+			table: "patients",
+			type: "insert",
+			invalidateKey: ["patients"],
+			onSuccess: (data) => {
+				if (data?.[0]) {
+					const createdPatient: Patient = {
+						id: data[0].id,
+						first_name: data[0].first_name,
+						last_name: data[0].last_name,
+						age: data[0].age,
+					};
+
+					setSelectedPatient(createdPatient);
+
+					setValue("first_name", createdPatient.first_name, {
+						shouldValidate: true,
+					});
+
+					setValue("last_name", createdPatient.last_name, {
+						shouldValidate: true,
+					});
+
+					setValue("age", String(createdPatient.age), {
+						shouldValidate: true,
+					});
+
+					successToast("Patient created successfully");
+
+					setShowNewPatientModal(false);
+				}
+			},
+			onError: (err: any) => {
+				errorToast(err.message);
+			},
+		});
+
+	const handlePatientSelect = (patient: Patient | "new") => {
+		if (patient === "new") {
+			setShowNewPatientModal(true);
+			setSelectedPatient(null);
+		} else {
+			setSelectedPatient(patient);
+
+			reset((prev) => ({
+				...prev,
+				first_name: patient.first_name,
+				last_name: patient.last_name,
+				age: patient.age,
+			}));
+		}
+	};
+
+	const handleNewPatientSubmit = () => {
+		if (
+			!newPatientData.first_name ||
+			!newPatientData.last_name ||
+			!newPatientData.age
+		) {
+			errorToast("Please fill in all required fields");
+			return;
+		}
+
+		createPatient({
+			first_name: newPatientData.first_name,
+			last_name: newPatientData.last_name,
+			age: newPatientData.age,
+		});
+	};
+
 	const onSubmit = async (data: MedsFormData): Promise<void> => {
 		setIsCounting(false);
 
-		const patientId: string = generateUniqueCode();
+		const patientId: string = selectedPatient?.id || generateUniqueCode();
 
 		const payload: NewMedsPayload = {
 			...data,
@@ -410,13 +344,14 @@ const RecordMeds = () => {
 							Patient
 						</span>
 
-                        <div>
-                            <PatientSelect
-                                patients={patients}
-                                value={selectedPatient}
-                                onSelect={handlePatientSelect}
-                            />
-                        </div>
+						<div>
+							<PatientSelect
+								patients={patients}
+								value={selectedPatient}
+								onSelect={handlePatientSelect}
+								onAddNew={() => handlePatientSelect("new")}
+							/>
+						</div>
 					</label>
 
 					<label className="grid gap-2">
@@ -492,6 +427,106 @@ const RecordMeds = () => {
 					</div>
 				</form>
 			</div>
+
+			{showNewPatientModal && (
+				<div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-5000 backdrop-blur-lg">
+					<div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+						<div className="flex justify-between items-center mb-4">
+							<h3 className="font-poppins font-bold text-xl">
+								Add New Patient
+							</h3>
+
+							<button
+								onClick={() => setShowNewPatientModal(false)}
+								className="py-0.5 px-1.5 hover:bg-gray-100 rounded-full"
+								type="button"
+							>
+								✕
+							</button>
+						</div>
+
+						<div className="grid gap-4">
+							<label className="grid gap-2">
+								<span className="font-poppins font-medium text-sm">
+									First Name{" "}
+									<span className="text-red">*</span>
+								</span>
+
+								<input
+									type="text"
+									className="input md:py-2 rounded-lg"
+									value={newPatientData.first_name}
+									onChange={(e) =>
+										setNewPatientData((prev) => ({
+											...prev,
+											first_name: e.target.value,
+										}))
+									}
+								/>
+							</label>
+
+							<label className="grid gap-2">
+								<span className="font-poppins font-medium text-sm">
+									Last Name{" "}
+									<span className="text-red">*</span>
+								</span>
+								<input
+									type="text"
+									className="input md:py-2 rounded-lg"
+									value={newPatientData.last_name}
+									onChange={(e) =>
+										setNewPatientData((prev) => ({
+											...prev,
+											last_name: e.target.value,
+										}))
+									}
+								/>
+							</label>
+
+							<label className="grid gap-2">
+								<span className="font-poppins font-medium text-sm">
+									Age <span className="text-red">*</span>
+								</span>
+								<input
+									type="text"
+									inputMode="numeric"
+									className="input md:py-2 rounded-lg"
+									value={newPatientData.age}
+									onChange={(e) =>
+										setNewPatientData((prev) => ({
+											...prev,
+											age: e.target.value,
+										}))
+									}
+								/>
+							</label>
+
+							<div className="grid gap-3 md:grid-cols-2 mt-4">
+								<button
+									type="button"
+									onClick={() =>
+										setShowNewPatientModal(false)
+									}
+									className="btn bg-red after:border-red border-red"
+								>
+									Cancel
+								</button>
+
+								<button
+									type="button"
+									onClick={handleNewPatientSubmit}
+									className="btn"
+									disabled={isCreatingPatient}
+								>
+									{isCreatingPatient
+										? "Adding..."
+										: "Add Patient"}
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 };

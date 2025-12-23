@@ -19,8 +19,9 @@ import { Patient } from "@/lib/patients";
 
 interface PatientSelectProps {
 	patients: Patient[];
-	onSelect: (patient: Patient) => void;
+	onSelect: (patient: Patient | "new") => void;
 	value?: Patient | null;
+	onAddNew?: () => void;
 }
 const PatientSelect = ({ patients, onSelect, value }: PatientSelectProps) => {
 	const [open, setOpen] = React.useState(false);
@@ -41,10 +42,22 @@ const PatientSelect = ({ patients, onSelect, value }: PatientSelectProps) => {
 				</button>
 			</PopoverTrigger>
 
-			<PopoverContent className="p-0">
-				<Command className="max-h-60">
+			<PopoverContent className="p-0 z-50000">
+				<Command className="max-h-60 z-50000">
 					<CommandInput placeholder="Search patient..." />
 					<CommandEmpty>No patient found.</CommandEmpty>
+
+					<button
+						className="w-full text-left px-3 py-2 text-blue-600 font-semibold hover:bg-blue-50"
+                        onClick={() => {
+                            onSelect("new");
+
+                            setOpen(false);
+                        }}
+                        type="button"
+					>
+						+ Add New Patient
+					</button>
 
 					<CommandGroup className="overflow-y-auto">
 						{patients.map((patient) => (
