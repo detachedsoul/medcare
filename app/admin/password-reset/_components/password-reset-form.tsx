@@ -36,7 +36,13 @@ const PasswordResetForm = () => {
 		table: "admin",
 		type: "update",
 		invalidateKey: ["admin"],
-		onSuccess: async (data) => {
+        onSuccess: async (data) => {
+            if (data && data?.length < 1) {
+                errorToast("Incorrect email address");
+
+                return;
+            }
+
             successToast("Password updated successfully!");
 
             reset();

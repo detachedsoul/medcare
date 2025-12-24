@@ -7,7 +7,7 @@ import { errorToast, successToast } from "@/lib/toast";
 import { useSupabaseMutation } from "@/hooks/use-mutation";
 import { randomString } from "@/lib/generate-unique-code";
 
-interface Admin {
+interface User {
 	id: string;
 	email: string;
 	password: string;
@@ -32,11 +32,17 @@ const PasswordResetForm = () => {
 		mutate: updatePassword,
 		isPending,
         error,
-	} = useSupabaseMutation<Admin>({
-		table: "admin",
+	} = useSupabaseMutation<User>({
+		table: "user",
 		type: "update",
-		invalidateKey: ["admin"],
+		invalidateKey: ["user"],
 		onSuccess: async (data) => {
+            if (data && data?.length < 1) {
+				errorToast("Incorrect email address");
+
+				return;
+			}
+
             successToast("Password updated successfully!");
 
             reset();
@@ -130,7 +136,7 @@ const PasswordResetForm = () => {
 				});
 
                 setTimeout(() => {
-					replace("/admin/sign-in");
+					replace("/User/sign-in");
 				}, 300);
 			} catch (err: unknown) {
 				console.error("Failed to send success email:", err);
@@ -194,7 +200,7 @@ const PasswordResetForm = () => {
 					Remembered your password?{" "}
 					<Link
 						className="text-blue hover:underline underline-offset-4 font-medium"
-						href="/admin/sign-in"
+						href="/User/sign-in"
 					>
 						Sign in instead
 					</Link>
