@@ -136,7 +136,7 @@ const PasswordResetForm = () => {
 				});
 
                 setTimeout(() => {
-					replace("/User/sign-in");
+					replace("/auth/sign-in");
 				}, 300);
 			} catch (err: unknown) {
 				console.error("Failed to send success email:", err);
