@@ -301,6 +301,18 @@ const RecordLabs = () => {
 				last_name: patient.last_name,
 				age: patient.age,
 			}));
+
+			setValue("first_name", patient.first_name, {
+				shouldValidate: true,
+			});
+
+			setValue("last_name", patient.last_name, {
+				shouldValidate: true,
+			});
+
+			setValue("age", String(patient.age), {
+				shouldValidate: true,
+			});
 		}
 	};
 
