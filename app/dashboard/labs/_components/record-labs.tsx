@@ -37,19 +37,188 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Patient, patients } from "@/lib/patients";
 
-const tests = [
+export const tests = [
+	// Hematology
+	{ value: "FBC Full Blood Count", label: "FBC Full Blood Count" },
+	{ value: "WBC White Blood Cells", label: "WBC White Blood Cells" },
+	{ value: "RBC Red Blood Cells", label: "RBC Red Blood Cells" },
+	{ value: "Hemoglobin", label: "Hemoglobin" },
+	{ value: "Hematocrit", label: "Hematocrit" },
 	{
-		value: "FBC Full Blood Count",
-		label: "FBC Full Blood Count",
+		value: "MCV Mean Corpuscular Volume",
+		label: "MCV Mean Corpuscular Volume",
 	},
 	{
-		value: "U&E Urea & Electrolytes",
-		label: "U&E Urea & Electrolytes",
+		value: "MCH Mean Corpuscular Hemoglobin",
+		label: "MCH Mean Corpuscular Hemoglobin",
 	},
 	{
-		value: "LFT Liver Function Tests",
-		label: "LFT Liver Function Tests",
+		value: "MCHC Mean Corpuscular Hemoglobin Concentration",
+		label: "MCHC Mean Corpuscular Hemoglobin Concentration",
 	},
+	{ value: "Platelet Count", label: "Platelet Count" },
+	{ value: "Reticulocyte Count", label: "Reticulocyte Count" },
+	{ value: "Neutrophils", label: "Neutrophils" },
+	{ value: "Lymphocytes", label: "Lymphocytes" },
+	{ value: "Monocytes", label: "Monocytes" },
+	{ value: "Eosinophils", label: "Eosinophils" },
+	{ value: "Basophils", label: "Basophils" },
+	{
+		value: "ESR Erythrocyte Sedimentation Rate",
+		label: "ESR Erythrocyte Sedimentation Rate",
+	},
+	{ value: "CRP C-Reactive Protein", label: "CRP C-Reactive Protein" },
+	{ value: "CRP High Sensitivity", label: "CRP High Sensitivity" },
+	{ value: "Blood Film", label: "Blood Film" },
+	{ value: "Coagulation Profile", label: "Coagulation Profile" },
+	{ value: "PT Prothrombin Time", label: "PT Prothrombin Time" },
+	{
+		value: "APTT Activated Partial Thromboplastin Time",
+		label: "APTT Activated Partial Thromboplastin Time",
+	},
+	{
+		value: "INR International Normalized Ratio",
+		label: "INR International Normalized Ratio",
+	},
+
+	// Biochemistry / Metabolic Panels
+	{ value: "U&E Urea & Electrolytes", label: "U&E Urea & Electrolytes" },
+	{ value: "Creatinine", label: "Creatinine" },
+	{ value: "Urea", label: "Urea" },
+	{ value: "Sodium", label: "Sodium" },
+	{ value: "Potassium", label: "Potassium" },
+	{ value: "Chloride", label: "Chloride" },
+	{ value: "Bicarbonate", label: "Bicarbonate" },
+	{ value: "RFT Renal Function Test", label: "RFT Renal Function Test" },
+	{ value: "LFT Liver Function Tests", label: "LFT Liver Function Tests" },
+	{
+		value: "AST Aspartate Transaminase",
+		label: "AST Aspartate Transaminase",
+	},
+	{ value: "ALT Alanine Transaminase", label: "ALT Alanine Transaminase" },
+	{ value: "ALP Alkaline Phosphatase", label: "ALP Alkaline Phosphatase" },
+	{
+		value: "GGT Gamma-Glutamyl Transferase",
+		label: "GGT Gamma-Glutamyl Transferase",
+	},
+	{ value: "Bilirubin Total", label: "Bilirubin Total" },
+	{ value: "Bilirubin Direct", label: "Bilirubin Direct" },
+	{ value: "Albumin", label: "Albumin" },
+	{ value: "Total Protein", label: "Total Protein" },
+	{ value: "Amylase", label: "Amylase" },
+	{ value: "Lipase", label: "Lipase" },
+	{ value: "Calcium", label: "Calcium" },
+	{ value: "Magnesium", label: "Magnesium" },
+	{ value: "Phosphate", label: "Phosphate" },
+	{ value: "Uric Acid", label: "Uric Acid" },
+	{ value: "Lipid Profile", label: "Lipid Profile" },
+	{ value: "Cholesterol Total", label: "Cholesterol Total" },
+	{ value: "HDL Cholesterol", label: "HDL Cholesterol" },
+	{ value: "LDL Cholesterol", label: "LDL Cholesterol" },
+	{ value: "Triglycerides", label: "Triglycerides" },
+	{ value: "Blood Glucose", label: "Blood Glucose" },
+	{ value: "Fasting Blood Sugar", label: "Fasting Blood Sugar" },
+	{ value: "Random Blood Sugar", label: "Random Blood Sugar" },
+	{ value: "2hr Postprandial Glucose", label: "2hr Postprandial Glucose" },
+	{ value: "HbA1c Glycated Hemoglobin", label: "HbA1c Glycated Hemoglobin" },
+	{ value: "Creatine Kinase CK", label: "Creatine Kinase CK" },
+	{ value: "Troponin I", label: "Troponin I" },
+	{ value: "Troponin T", label: "Troponin T" },
+
+	// Endocrine / Hormones
+	{
+		value: "TSH Thyroid Stimulating Hormone",
+		label: "TSH Thyroid Stimulating Hormone",
+	},
+	{ value: "FT3 Free Triiodothyronine", label: "FT3 Free Triiodothyronine" },
+	{ value: "FT4 Free Thyroxine", label: "FT4 Free Thyroxine" },
+	{ value: "Cortisol", label: "Cortisol" },
+	{
+		value: "ACTH Adrenocorticotropic Hormone",
+		label: "ACTH Adrenocorticotropic Hormone",
+	},
+	{
+		value: "FSH Follicle Stimulating Hormone",
+		label: "FSH Follicle Stimulating Hormone",
+	},
+	{ value: "LH Luteinizing Hormone", label: "LH Luteinizing Hormone" },
+	{ value: "Prolactin", label: "Prolactin" },
+	{ value: "Testosterone", label: "Testosterone" },
+	{ value: "Estradiol", label: "Estradiol" },
+	{ value: "Progesterone", label: "Progesterone" },
+	{ value: "Insulin", label: "Insulin" },
+
+	// Vitamins / Minerals / Trace Elements
+	{ value: "Vitamin B12", label: "Vitamin B12" },
+	{ value: "Folate", label: "Folate" },
+	{ value: "Vitamin D", label: "Vitamin D" },
+	{ value: "Vitamin C", label: "Vitamin C" },
+	{ value: "Iron Studies", label: "Iron Studies" },
+	{ value: "Ferritin", label: "Ferritin" },
+	{ value: "Transferrin", label: "Transferrin" },
+	{ value: "Zinc", label: "Zinc" },
+	{ value: "Copper", label: "Copper" },
+
+	// Infectious / Serology
+	{ value: "HIV Test", label: "HIV Test" },
+	{
+		value: "Hepatitis B Surface Antigen",
+		label: "Hepatitis B Surface Antigen",
+	},
+	{ value: "Hepatitis C Antibody", label: "Hepatitis C Antibody" },
+	{ value: "VDRL / RPR Syphilis Test", label: "VDRL / RPR Syphilis Test" },
+	{ value: "Malaria Parasite", label: "Malaria Parasite" },
+	{ value: "TB Tuberculosis Test", label: "TB Tuberculosis Test" },
+	{ value: "Blood Culture", label: "Blood Culture" },
+	{ value: "Urine Culture", label: "Urine Culture" },
+	{ value: "Stool Culture", label: "Stool Culture" },
+	{ value: "PCR COVID-19", label: "PCR COVID-19" },
+	{ value: "PCR Influenza A/B", label: "PCR Influenza A/B" },
+	{ value: "PCR RSV", label: "PCR RSV" },
+	{ value: "COVID-19 Antibody Test", label: "COVID-19 Antibody Test" },
+	{ value: "H. Pylori Antigen", label: "H. Pylori Antigen" },
+
+	// Autoimmune / Inflammatory
+	{ value: "ANA Antinuclear Antibody", label: "ANA Antinuclear Antibody" },
+	{ value: "Anti-dsDNA", label: "Anti-dsDNA" },
+	{ value: "RF Rheumatoid Factor", label: "RF Rheumatoid Factor" },
+	{ value: "Anti-CCP", label: "Anti-CCP" },
+	{ value: "Complement C3", label: "Complement C3" },
+	{ value: "Complement C4", label: "Complement C4" },
+
+	// Tumor Markers
+	{ value: "AFP Alpha-Fetoprotein", label: "AFP Alpha-Fetoprotein" },
+	{
+		value: "CEA Carcinoembryonic Antigen",
+		label: "CEA Carcinoembryonic Antigen",
+	},
+	{ value: "CA-125", label: "CA-125" },
+	{ value: "CA-19-9", label: "CA-19-9" },
+	{
+		value: "PSA Prostate Specific Antigen",
+		label: "PSA Prostate Specific Antigen",
+	},
+	{ value: "Beta HCG", label: "Beta HCG" },
+
+	// Misc / Specialty
+	{ value: "Urinalysis", label: "Urinalysis" },
+	{ value: "Pregnancy Test", label: "Pregnancy Test" },
+	{ value: "Stool Occult Blood", label: "Stool Occult Blood" },
+	{ value: "Electrocardiogram ECG", label: "Electrocardiogram ECG" },
+	{ value: "Chest X-ray CXR", label: "Chest X-ray CXR" },
+	{ value: "Echocardiogram", label: "Echocardiogram" },
+	{ value: "ABG Arterial Blood Gas", label: "ABG Arterial Blood Gas" },
+	{
+		value: "TFT Thyroid Function Test Panel",
+		label: "TFT Thyroid Function Test Panel",
+	},
+	{ value: "Hormone Panel", label: "Hormone Panel" },
+	{ value: "Metabolic Panel", label: "Metabolic Panel" },
+	{ value: "Electrolyte Panel", label: "Electrolyte Panel" },
+	{ value: "Liver Panel", label: "Liver Panel" },
+	{ value: "Renal Panel", label: "Renal Panel" },
+	{ value: "Cardiac Panel", label: "Cardiac Panel" },
+	{ value: "Coagulation Panel", label: "Coagulation Panel" },
 ];
 
 interface Labs {
@@ -122,9 +291,11 @@ type LabsFormData = z.infer<typeof labsSchema>;
 const RecordLabs = () => {
 	const { code } = useClinicianCode();
 
-    const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+	const [selectedPatient, setSelectedPatient] = useState<Patient | null>(
+		null,
+	);
 
-    const [showNewPatientModal, setShowNewPatientModal] = useState(false);
+	const [showNewPatientModal, setShowNewPatientModal] = useState(false);
 
 	const [newPatientData, setNewPatientData] = useState({
 		first_name: "",
@@ -146,12 +317,16 @@ const RecordLabs = () => {
 	const {
 		register,
 		handleSubmit,
-        reset,
-        setValue,
+		reset,
+		setValue,
 		formState: { errors, isValid },
 	} = useForm<LabsFormData>({
 		resolver: async (data, context, options) => {
-			const result = await zodResolver(labsSchema)(data, context, options);
+			const result = await zodResolver(labsSchema)(
+				data,
+				context,
+				options,
+			);
 
 			if (firstRunRef.current) {
 				firstRunRef.current = false;
@@ -202,10 +377,13 @@ const RecordLabs = () => {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					service_id: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "",
-					template_id: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "",
+					service_id:
+						process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || "",
+					template_id:
+						process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || "",
 					user_id: process.env.NEXT_PUBLIC_EMAILJS_USER_ID || "",
-					accessToken: process.env.NEXT_PUBLIC_EMAILJS_ACCESS_TOKEN || "",
+					accessToken:
+						process.env.NEXT_PUBLIC_EMAILJS_ACCESS_TOKEN || "",
 					template_params: {
 						to_email: "ayodeji2.okunola@live.uwe.ac.uk",
 						subject: "Order Labs Record – Validation Errors",
@@ -242,15 +420,15 @@ const RecordLabs = () => {
 			setIsCounting(false);
 			setTestName("");
 			setLocation("");
-            setSelectedPatient(null);
+			setSelectedPatient(null);
 		},
 		onError: (err: any) => {
 			setErrorCount((prev) => prev + 1);
 			errorToast(err.message);
 		},
-    });
+	});
 
-    const { mutate: createPatient, isPending: isCreatingPatient } =
+	const { mutate: createPatient, isPending: isCreatingPatient } =
 		useSupabaseMutation<NewPatient>({
 			table: "patients",
 			type: "insert",
@@ -411,7 +589,7 @@ const RecordLabs = () => {
 								</PopoverTrigger>
 
 								<PopoverContent className="p-0">
-									<Command>
+									<Command className="max-h-60 z-50000">
 										<CommandInput
 											placeholder="Search test..."
 											className="h-9"
