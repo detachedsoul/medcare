@@ -2,6 +2,7 @@
 "use client";
 
 import PatientSelect from "@/components/patient-select";
+import DrugSelect from "@/components/drug-select";
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -115,6 +116,7 @@ const RecordMeds = () => {
 
 	const {
 		register,
+        watch,
 		handleSubmit,
 		reset,
         setValue,
@@ -154,7 +156,8 @@ const RecordMeds = () => {
 			return result;
 		},
 		mode: "all",
-	});
+    });
+
 	const [clickCount, setClickCount] = useState<number>(0);
 	const [errorCount, setErrorCount] = useState<number>(0);
 	const [isCounting, setIsCounting] = useState<boolean>(false);
@@ -368,14 +371,18 @@ const RecordMeds = () => {
 
 					<label className="grid gap-2">
 						<span className="font-poppins font-medium text-sm">
-							Drug Name (e.g., Atorvastatin)
+							Drug Name
 						</span>
-						<input
-							className="input md:py-2 rounded-lg"
-							type="text"
-							placeholder="Enter drug name"
-							{...register("drug_name")}
-							onFocus={handleInputFocus}
+
+						<DrugSelect
+							value={watch("drug_name")}
+							onSelect={(drug) => {
+								setValue("drug_name", drug, {
+									shouldValidate: true,
+									shouldDirty: true,
+								});
+							}}
+							placeholder="Select drug"
 						/>
 
 						{errors.drug_name && (
