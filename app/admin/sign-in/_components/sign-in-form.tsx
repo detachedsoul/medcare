@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { errorToast, successToast } from "@/lib/toast";
-import { useQuery } from "@/hooks/use-query";
+import { supabase } from "@/lib/supabase-client";
 
 interface User {
 	id: string;
@@ -22,59 +23,58 @@ interface FormValues {
 
 const SignInForm = () => {
 	const { replace } = useRouter();
+	const [isLoading, setIsLoading] = useState(false);
 
 	const {
 		register,
 		handleSubmit,
 		formState: { errors },
-		getValues,
 	} = useForm<FormValues>();
 
-	const { error, isFetching, refetch } = useQuery<User>({
-		table: "admin",
-		filters: [
-			{
-				column: "email",
-				value: getValues("email")?.trim().toLowerCase(),
-			},
-			{
-				column: "password",
-				value: getValues("password"),
-			},
-		],
-		enabled: false,
-		key: ["admin-login"],
-	});
+	const onSubmit = async (values: FormValues) => {
+		const { email, password } = values;
 
-	const onSubmit = async () => {
-		const { email, password } = getValues();
-
-        if (!email || !password) {
-            errorToast("Email and password are required.");
-            return;
-        }
-
-		const res = await refetch();
-
-		if (res.error) {
-			errorToast(res.error.message);
+		if (!email || !password) {
+			errorToast("Email and password are required.");
 			return;
 		}
 
-		if (!res.data || res.data.length < 1) {
-			errorToast("Invalid email or password.");
-			return;
+		setIsLoading(true);
+
+		try {
+			const { data, error } = await supabase
+				.from("admin")
+				.select("*")
+				.match({
+					email: email.trim().toLowerCase(),
+					password: password,
+				});
+
+			if (error) {
+				errorToast(error.message);
+				return;
+			}
+
+			if (!data || data.length < 1) {
+				errorToast("Invalid email or password.");
+				return;
+			}
+
+			const user = data[0] as User;
+
+			localStorage.setItem("admin_code", user.participant_code);
+
+			successToast(
+				`Welcome${user.first_name ? `, ${user.first_name}` : ""}!`,
+			);
+
+			replace("/admin");
+		} catch (err) {
+			errorToast("An error occurred during sign in.");
+			console.error(err);
+		} finally {
+			setIsLoading(false);
 		}
-
-		const user = res.data[0];
-
-		localStorage.setItem("admin_code", user.participant_code);
-
-		successToast(
-			`Welcome${user.first_name ? `, ${user.first_name}` : ""}!`,
-		);
-
-		replace("/admin");
 	};
 
 	return (
@@ -121,16 +121,12 @@ const SignInForm = () => {
 					)}
 				</div>
 
-				{error && (
-					<p className="text-red font-medium">{error.message}</p>
-				)}
-
 				<button
 					className="btn"
 					type="submit"
-					disabled={isFetching}
+					disabled={isLoading}
 				>
-					{isFetching ? "Signing In..." : "Sign In"}
+					{isLoading ? "Signing In..." : "Sign In"}
 				</button>
 
 				<p>
